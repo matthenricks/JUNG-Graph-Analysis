@@ -362,8 +362,9 @@ public class Runner {
 	 * @throws IOException 
 	 * @throws IllegalAccessException 
 	 * @throws InstantiationException 
+	 * @throws ExecutionException 
 	 */
-	public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException {
+	public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException, ExecutionException {
 		
 		// This may be inefficient, but it's easier to keep track of
 		JobTracker mainTracker = new JobTracker();
@@ -381,7 +382,7 @@ public class Runner {
 		Graph<String, String> graph = importGraph(summary, args, mainTracker);
 		
 		/*** BEGIN THE CONCURRENCY ***/
-		ExecutorService executorService = Executors.newFixedThreadPool(20);
+		ExecutorService executorService = Executors.newCachedThreadPool();
 		// Run a thread to get the population BC
 		// This manages it being posted for the other threads to pull
 		Callable<ConcurrentHashMap<String, Double>> popThread = new PopulationBC.CallableGraphBC(graph, outputDir + pBcPostfix, mainTracker, "Main BC Calculation");
@@ -396,7 +397,7 @@ public class Runner {
 		Utils.FileSystem.createFolder(sampleOverallDir);
 			
 		// Map to correlate the names of the samples to their respective outputs
-		HashMap<String, Future<Double[]>> sampleOutputs = new HashMap<String, Future<Double[]>>(10);
+		HashMap<String, Future<double[]>> sampleOutputs = new HashMap<String, Future<double[]>>(10);
 		
 		// Begin the sampling!
 		for (double alpha = 0.1; alpha < 1.0; alpha += 0.2) {
@@ -407,11 +408,16 @@ public class Runner {
 			
 			// We are going to try this with the sampling method based off alpha
 			SampleMethod rndSample = new RandomSampleNode(alpha);
-			executorService.submit(new SampleThreadRunner(sampleDir, sampleName, 50, rndSample, graph, executorService));			
+			sampleOutputs.put(sampleName, executorService.submit(new SampleThreadRunner(sampleDir, sampleName, 50, rndSample, graph, executorService)));			
 		}
 		
-		// Wait for everything to finish
+		// Wait for everything to finish, getting all the correlation values
+		HashMap<String, double[]> correlations = new HashMap<String, double[]>(10);
 		try {
+			for (String futureName : sampleOutputs.keySet()) {
+				correlations.put(futureName, sampleOutputs.get(futureName).get());
+			}
+			executorService.shutdown();
 			executorService.awaitTermination(24, TimeUnit.HOURS);
 		} catch (InterruptedException e) {
 			System.out.println("Error in threads... Very helpful");
@@ -422,15 +428,8 @@ public class Runner {
 		BufferedWriter metricOutput = Utils.FileSystem.createFile(outputDir + pCorrPostfix);
 		metricOutput.write("\"sampling method\",\"true correlation\", \"adj correlation\"");
 		metricOutput.newLine();
-		for (String key : sampleOutputs.keySet()) {
-			Double[] output = null;
-			try {
-				output = sampleOutputs.get(key).get();
-			} catch (Exception e) {
-				System.out.println("Did everything actually print...");
-				e.printStackTrace();
-			}
-			metricOutput.append(key + "," + dcf.format(output[0]) + "," + dcf.format(output[1]));
+		for (String key : correlations.keySet()) {
+			metricOutput.append(key + "," + dcf.format(correlations.get(key)[0]) + "," + dcf.format(correlations.get(key)[1]));
 			metricOutput.newLine();
 		}
 		metricOutput.close();
@@ -440,11 +439,8 @@ public class Runner {
 		
 		// Write out the respective job times
 		BufferedWriter jobOutput = Utils.FileSystem.createFile(outputDir + pSummaryPostfix);
-		jobOutput.append(mainTracker.getJobTimes());
+		jobOutput.append(mainTracker.getJobTimesMinutes());
 		jobOutput.close();
-		
-		// Shut down the executor service
-		executorService.shutdown();	
 	}
 	
 	

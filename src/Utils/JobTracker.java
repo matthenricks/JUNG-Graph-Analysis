@@ -65,4 +65,13 @@ public class JobTracker {
 		
 		return "Job Times Are As Follows (in nanoseconds):\n" + str.toString();
 	}
+	
+	public String getJobTimesMinutes() {
+		StringBuffer str = new StringBuffer();
+		for (String tName : timers.keySet()) {
+			str.append(tName + "\t" + timers.get(tName).getMinutes() + "\n");
+		}
+		
+		return "Job Times Are As Follows (in nanoseconds):\n" + str.toString();
+	}
 }
