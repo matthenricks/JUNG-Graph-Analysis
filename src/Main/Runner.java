@@ -33,6 +33,7 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**** java -Xms512m -Xmx3G -jar crawler.jar ****/
+// TODO: Runtime.availableProcessors -> get the available hardware threads
 // Use this to increase the heap size for the shared space of the threads
 
 /**
