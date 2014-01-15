@@ -6,5 +6,9 @@ package Utils;
  *
  */
 public class HardCode {
+	
+	public static void shankarTest() {
+		System.out.println("Test from shankar"); 
+	}
 
 }
