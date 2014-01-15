@@ -3,12 +3,16 @@ package SamplingAlgorithms;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.util.TreeSet;
 
+import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
+import edu.uci.ics.jung.graph.util.EdgeType;
 
 public class RandomBFSSample implements SampleMethod {
 
@@ -25,81 +29,113 @@ public class RandomBFSSample implements SampleMethod {
 		this.threshold = threshold;
 		seed = (new Random()).nextInt();
 	}
-
-	// TODO: This may need some Spring cleaning
+	
+	// TODO: this had a bias towards selecting more influential nodes because they have a higher
+	// chance of being selected earlier, which puts them in the pool for the BFS, biasing the results
+	// This also helps make the samples easily huge
+	// A way to reduce this is to make it do all random sampling, then make it do all BFS afterwards.
+	// This said, doing a BFS afterwards will still generate bias towards the end being more influential.
+	// By influential, I mean, having many nodes pointing to it, not necessarily outwards though
 	public Graph<String, String> sampleGraph(Graph<String, String> parentGraph) {
-		Random rand = new Random(seed);
-		double prob = rand.nextDouble();
-		List<String> vertices = new ArrayList<String>(parentGraph.getVertices());
-		Collections.shuffle((vertices)); 
-		Graph<String, String> sampledBFSGraph = new UndirectedSparseGraph<String, String>();
-		Collection<String> neighbors = new TreeSet<String>(); 
-		ArrayList<String> removevertex = new ArrayList<String>();
-		// seed set
-		removevertex.add(vertices.get(0));
-		//System.out.println(vertices.get(0));
-		neighbors = parentGraph.getNeighbors(vertices.get(0));
-		//System.out.println(neighbors);
-		sampledBFSGraph.addVertex(vertices.get(0));
-		for(String vertex: neighbors) {
-			sampledBFSGraph.addVertex(vertex);
-			sampledBFSGraph.addEdge(parentGraph.findEdge(vertices.get(0), vertex), vertices.get(0), vertex);	
-		}
 		
-		for(int i = 1; i < Math.floor(alpha*parentGraph.getVertexCount()); i++) { 
-			prob = rand.nextDouble();
-			if(prob < threshold) { //FROM HERE, FIX PROBABILITY
-				//System.out.println(vertices.get(i));				
-				neighbors = parentGraph.getNeighbors(vertices.get(i));
-				//System.out.println(neighbors); 
-				removevertex.add(vertices.get(i)); 
-				sampledBFSGraph.addVertex(vertices.get(i));
-				for(String vertex: neighbors) {
+		if (parentGraph.getVertexCount() == 0 || parentGraph.getEdgeCount() == 0) 
+			throw new Error("Parent Graph must contain vertexes and edges");
+
+		// Set up the sampled graph frame
+		Graph<String, String> sampledBFSGraph;
+		if (parentGraph.getDefaultEdgeType() == EdgeType.DIRECTED) {
+			sampledBFSGraph = new DirectedSparseGraph<String, String>();
+		} else if (parentGraph.getDefaultEdgeType() == EdgeType.UNDIRECTED) {
+			sampledBFSGraph = new UndirectedSparseGraph<String, String>();
+		} else {
+			throw new Error("Edge Type of the parent graph is unknown");
+		}
+
+		int totalIterations = (int)Math.ceil(alpha*parentGraph.getVertexCount());
+		Random rand = new Random(seed);
+		
+		// A list to hold the set of Strings that is possibly selected
+		// ArrayList probably has one of the quickest shuffles and I'm unsure about the Collection's randomness
+		ArrayList<String> vertices = new ArrayList<String>(parentGraph.getVertices());
+		Collections.shuffle(vertices);
+		// Iterator to easily run through the values
+		Iterator<String> mainVGetter = vertices.iterator();
+		
+		// Keeps track of the neighbors that have been added
+		ArrayList<String> neighbors = new ArrayList<String>();
+		
+		// Keeps track of the already processed nodes
+		HashSet<String> processed = new HashSet<String>(totalIterations);
+		
+		int BFS_lost = 0;
+		String current_vertex;
+		for(int i = 0; i < totalIterations; i++) { 
+			
+			// Select the node to add
+			if (rand.nextDouble() < threshold) {
+				while (processed.contains(current_vertex = mainVGetter.next()));
+					continue;
+			} else {
+				current_vertex = selectRandomNeighbor(neighbors, processed);
+				if (current_vertex == null) {
+					BFS_lost++;
+					continue;
+				}
+			}
+			// Add the area around the selected node, itself and neighbors
+			sampledBFSGraph.addVertex(current_vertex);
+			processed.add(current_vertex);
+			for(String vertex: parentGraph.getNeighbors(current_vertex)) {
+				// Add new vertex (if needed)
+				if (!sampledBFSGraph.containsVertex(vertex)) {
 					sampledBFSGraph.addVertex(vertex);
-					boolean copy = false;
-					for(String edge: sampledBFSGraph.getEdges()) {
-						if(edge.equalsIgnoreCase(parentGraph.findEdge(vertices.get(i), vertex))) {
-							copy = true;
-							break;
-						}
-					}
-					if(copy == false) {
-						sampledBFSGraph.addEdge(parentGraph.findEdge(vertices.get(i), vertex), vertices.get(i), vertex);
-					}
+					neighbors.add(vertex);
 				}
-				//System.out.println("samping size: " + Math.floor(sampledBFSGraph.getVertexCount()));
-			}	 else {
-				List<String> bfsvertices = new ArrayList<String>(sampledBFSGraph.getVertices());
-				for(int n=0; n < removevertex.size(); n++){
-					for(int m=0; m<sampledBFSGraph.getVertexCount(); m++){
-						if(removevertex.get(n).equalsIgnoreCase(bfsvertices.get(m))){
-							bfsvertices.remove(m);
-							m-=1;
-							break;
-						}
-					}
-				}
-				Collections.shuffle((bfsvertices));	//  randomization of unique vertices.				
-				String bfsvertex = bfsvertices.get(0);
-				sampledBFSGraph.addVertex(bfsvertex);
-				neighbors = parentGraph.getNeighbors(bfsvertex);				
-				removevertex.add(bfsvertex);
-				for(String vertex: neighbors) {
-					sampledBFSGraph.addVertex(vertex);
-					boolean copy = false;
-					for(String edge: sampledBFSGraph.getEdges()) {
-						if(edge.equalsIgnoreCase(parentGraph.findEdge(bfsvertex, vertex))) {
-							copy = true;
-							break;
-						}
-					}
-					if(copy == false) {
-					sampledBFSGraph.addEdge(parentGraph.findEdge(bfsvertices.get(0), vertex), bfsvertices.get(0), vertex);	
-					}
-				}
-				//System.out.println("samping size: " + Math.floor(sampledBFSGraph.getVertexCount()));
+				String nEdge = sampledBFSGraph.findEdge(vertex, current_vertex);
+				if (!sampledBFSGraph.containsEdge(nEdge))
+					sampledBFSGraph.addEdge(parentGraph.findEdge(vertex, current_vertex), vertex, current_vertex, parentGraph.getDefaultEdgeType());
 			}
 		}
+		
+		// Now add any missed BFS steps due to a lack of neighbors
+		for (int i = 0; i < BFS_lost; i++) {
+			current_vertex = selectRandomNeighbor(neighbors, processed);
+			if (current_vertex == null)
+				break;
+			
+			// Add the area around the selected node, itself and neighbors
+			sampledBFSGraph.addVertex(current_vertex);
+			processed.add(current_vertex);
+			for(String vertex: parentGraph.getNeighbors(current_vertex)) {
+				// Add new vertex (if needed)
+				if (!sampledBFSGraph.containsVertex(vertex)) {
+					sampledBFSGraph.addVertex(vertex);
+					neighbors.add(vertex);
+				}
+				String nEdge = sampledBFSGraph.findEdge(vertex, current_vertex);
+				if (!sampledBFSGraph.containsEdge(nEdge))
+					sampledBFSGraph.addEdge(parentGraph.findEdge(vertex, current_vertex), vertex, current_vertex, parentGraph.getDefaultEdgeType());
+			}
+		}
+		
 		return sampledBFSGraph;
+	}
+		
+	private String selectRandomNeighbor(List<String> neighbors, Collection<String> processed) {
+		// Randomize all the possible selections. This is potentially, grossly inefficient (depending on the remove)
+		Collections.shuffle(neighbors);
+		Iterator<String> neighborIterator = neighbors.iterator();
+		String current_vertex = null;
+		while (neighborIterator.hasNext()) {
+			if (!processed.contains(current_vertex = neighborIterator.next())) {
+				neighborIterator.remove();
+				break;
+			} else {
+				neighborIterator.remove();
+				current_vertex = null;
+				continue;
+			}
+		}
+		return current_vertex;
 	}
 }
