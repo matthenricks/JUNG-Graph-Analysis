@@ -85,8 +85,8 @@ public class BCCorrelator {
 				
 				// Add the selected values
 				for (int counter = 0; counter < sampleValues.size(); counter++) {
-					popValues[i] = popBC.get(sampleValues.get(i).getKey());
-					sample[i] = sampleValues.get(i).getValue()[0];
+					popValues[counter] = popBC.get(sampleValues.get(counter).getKey());
+					sample[counter] = sampleValues.get(counter).getValue()[i];
 				}
 				
 				// Compute the correlation
