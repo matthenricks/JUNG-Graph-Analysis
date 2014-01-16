@@ -1,17 +1,8 @@
 package Utils;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.regex.Pattern;
 import java.util.concurrent.ThreadFactory;
-
-import GraphCreation.BarabasiAlbertGraphGenerator;
-import GraphCreation.BasicGraph;
-import GraphCreation.ErdosRenyiGraphGenerator;
-import GraphCreation.FriendsTwitterDataImporter;
-import GraphCreation.GraphLoader;
-import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.util.EdgeType;
+import java.util.regex.Pattern;
 
 /**
  * A class for the sole purpose of including all of the global hard-coded values in
@@ -20,9 +11,19 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  */
 public class HardCode {
 	
-
+	// Folder structural Strings for where information is being held/in what type of file
+	public static String pSummaryPostfix = "/summary.txt";
+	public static String pCorrPostfix = "/analysis.csv";
+	public static String pMetricPostfix = "/metrics.txt";
+	public static String pWccPostfix = "/WCC.csv";
+	public static String pBcPostfix = "/bc.csv";
+	public static String pSamplesFolder = "/samples/";
+	public static String pDataFix = "/data.dat";
+	
+	// Formatting variables for how doubles will be displayed
 	public static DecimalFormat dcf3 = new DecimalFormat("0.000");
 	public static DecimalFormat dcf = new DecimalFormat("00000");
+	// Quick reference to a Pattern used to decompose CSV files
 	public static Pattern separateReg= Pattern.compile("\\,", Pattern.DOTALL);
 	
 	/**

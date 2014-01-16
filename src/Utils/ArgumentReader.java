@@ -74,7 +74,7 @@ public class ArgumentReader {
 							throw new Error("Edge type unhandled: " + args[i]);
 						}
 					} catch (Error e) {
-						System.err.println("Error in successive variables after twitterImport");
+						System.err.println("Error in successive variables after twitterImport, use location, the graph type (Directed/Undirected)");
 						e.printStackTrace();
 					}
 				} else if (args[i].equalsIgnoreCase("genericImport")) {
