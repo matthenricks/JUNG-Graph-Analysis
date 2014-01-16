@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import java.util.TreeSet;
 
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
@@ -73,7 +72,7 @@ public class RandomBFSSample implements SampleMethod {
 			
 			// Select the node to add
 			if (rand.nextDouble() < threshold) {
-				while (processed.contains(current_vertex = mainVGetter.next()));
+				while (processed.contains(current_vertex = mainVGetter.next()))
 					continue;
 			} else {
 				current_vertex = selectRandomNeighbor(neighbors, processed);
@@ -100,8 +99,12 @@ public class RandomBFSSample implements SampleMethod {
 		// Now add any missed BFS steps due to a lack of neighbors
 		for (int i = 0; i < BFS_lost; i++) {
 			current_vertex = selectRandomNeighbor(neighbors, processed);
-			if (current_vertex == null)
-				break;
+			if (current_vertex == null) {
+				// Resort to doing the random sampling method
+				// TODO: @Shankar, is this a good method?
+				while (processed.contains(current_vertex = mainVGetter.next()))
+					continue;
+			}
 			
 			// Add the area around the selected node, itself and neighbors
 			sampledBFSGraph.addVertex(current_vertex);

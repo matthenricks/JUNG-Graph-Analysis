@@ -50,16 +50,8 @@ public class RandomSampleNode implements SampleMethod {
 		List<String> vertices = new ArrayList<String>(parentGraph.getVertices());
 		Collections.shuffle((vertices), new Random(seed));
 		
-		/** Add initial seed for the new graph **/
-		// Create the seed of the sample from the initial node and one step of BFS (its neighbors)
-		sampledGraph.addVertex(vertices.get(0));
-		for(String vertex: parentGraph.getNeighbors(vertices.get(0))) {
-			sampledGraph.addVertex(vertex);
-			sampledGraph.addEdge(parentGraph.findEdge(vertices.get(0), vertex), vertices.get(0), vertex);
-		}
-		
 		/** Additional BFS added to the sample **/
-		for(int i = 1; i < Math.floor(alpha*parentGraph.getVertexCount()); i++) {
+		for(int i = 0; i < Math.ceil(alpha*parentGraph.getVertexCount()); i++) {
 			// Add the next vertex and it's BFS
 			sampledGraph.addVertex(vertices.get(i));
 			for(String vertex: parentGraph.getNeighbors(vertices.get(i))) {

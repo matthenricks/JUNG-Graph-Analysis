@@ -17,36 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BCCorrelator {
 	
-	static List<Comparator<Entry<String, Double[]>>> BCComparisons = new ArrayList<Comparator<Entry<String, Double[]>>>();
-	static {
-		BCComparisons.add(new Comparator<Entry<String, Double[]>>() {
-			@Override
-			public int compare(Entry<String, Double[]> arg0,
-					Entry<String, Double[]> arg1) {
-				Double comp = (arg0.getValue()[0] - arg1.getValue()[0]);
-				if (comp == 0) 
-					return 0;
-				else 
-					return (comp > 0) ? 1 : -1;
-			}
-		});
-		BCComparisons.add(new Comparator<Entry<String, Double[]>>() {
-			@Override
-			public int compare(Entry<String, Double[]> arg0,
-					Entry<String, Double[]> arg1) {
-				Double comp = (arg0.getValue()[1] - arg1.getValue()[1]);
-				if (comp == 0) 
-					return 0;
-				else 
-					return (comp > 0) ? 1 : -1;
-			}
-		});
-	};
-	
 	public static class BCCorrelationThread implements Callable<double[]> {
 
 		ConcurrentHashMap<String, Double> popBC;
-		HashMap<String, Double[]> sampleBC;
+		HashMap<String, Double> sampleBC;
 		int nodeNum;
 		/**
 		 * Constructor for the BCCorrelation function
@@ -54,7 +28,7 @@ public class BCCorrelator {
 		 * @param sampleBC
 		 * @param nodeNum
 		 */
-		public BCCorrelationThread(ConcurrentHashMap<String, Double> popBC, HashMap<String, Double[]> sampleBC, int nodeNum) {
+		public BCCorrelationThread(ConcurrentHashMap<String, Double> popBC, HashMap<String, Double> sampleBC, int nodeNum) {
 			this.popBC = popBC;
 			this.sampleBC = sampleBC;
 			this.nodeNum = nodeNum;
@@ -66,76 +40,43 @@ public class BCCorrelator {
 		
 		@Override
 		public double[] call() throws Exception {
-			// First get the smallest values from the sample set for population BC
-			List<Entry<String, Double[]>> sampleValues = new ArrayList<Entry<String, Double[]>>();
-			for (Entry<String, Double[]> value : sampleBC.entrySet())
-				sampleValues.add(value);
-			
-			double[] correlations = new double[BCComparisons.size()];
-			
-			// Obtain the selected values from the big sets and generate correlations from them
-			// Additionally, plot them
-			for (int i = 0; i < BCComparisons.size(); i++) {
-				// Resort the sample to get the right values
-				Collections.sort(sampleValues, BCComparisons.get(i));
-				
-				// Obtain the values of the population sample and the values of the two doubles
-				double[] popValues = new double[sampleValues.size()];
-				double[] sample = new double[sampleValues.size()];
-				
-				// Add the selected values
-				for (int counter = 0; counter < sampleValues.size(); counter++) {
-					popValues[counter] = popBC.get(sampleValues.get(counter).getKey());
-					sample[counter] = sampleValues.get(counter).getValue()[i];
-				}
-				
-				// Compute the correlation
-				correlations[i] = Correlation.Correlations.spearmansCorrelation(popValues, sample);
-			}
-			
-			return correlations;
+			return BCCorrelator.runBCComparison(popBC, sampleBC, nodeNum);
 		}
-		
 	};
 	
 	/**
-	 * Obtains the correlation values of each BC sample in question and plots the samples against the population
+	 * Obtains the correlation values of each BC sample in question
 	 * @param popBC
 	 * @param sampleBC
 	 * @param n - the number of nodes to be compared
 	 */
-	public static double[] runBCComparison(ConcurrentHashMap<String, Double> popBC, HashMap<String, Double[]> sampleBC, int n) {
+	public static double[] runBCComparison(ConcurrentHashMap<String, Double> popBC, HashMap<String, Double> sampleBC, int nodeNum) {
 		
-		// First get the smallest values from the sample set for population BC
-		List<Entry<String, Double[]>> sampleValues = new ArrayList<Entry<String, Double[]>>();
-		for (Entry<String, Double[]> value : sampleBC.entrySet())
-			sampleValues.add(value);
-		
-		double[] correlations = new double[BCComparisons.size()];
-		
-		// Obtain the selected values from the big sets and generate correlations from them
-		// Additionally, plot them
-		for (int i = 0; i < BCComparisons.size(); i++) {
-			// Resort the sample to get the right values
-			Collections.sort(sampleValues, BCComparisons.get(i));
-			
-			// Obtain the values of the population sample and the values of the two doubles
-			double[] popValues = new double[sampleValues.size()];
-			double[] sample = new double[sampleValues.size()];
-			
-			// Add the selected values
-			for (int counter = 0; counter < sampleValues.size(); counter++) {
-				popValues[i] = popBC.get(sampleValues.get(i).getKey());
-				sample[i] = sampleValues.get(i).getValue()[0];
+		// First convert the set into a list so it can be ordered from greatest->smallest
+		List<Entry<String, Double>> sampleValues = new ArrayList<Entry<String, Double>>(sampleBC.entrySet());
+		Collections.sort(sampleValues, new Comparator<Entry<String, Double>>() {
+			@Override
+			public int compare(Entry<String, Double> arg0,
+					Entry<String, Double> arg1) {
+				return arg1.getValue().compareTo(arg0.getValue());
 			}
+		});
 			
-			// Compute the correlation
-			correlations[i] = Correlation.Correlations.spearmansCorrelation(popValues, sample);
-			
-			// Now plot them!
-			// TODO: 
+		// Obtain the values of the population sample and the values of the two doubles
+		double[] popValues = new double[nodeNum];
+		double[] sample = new double[nodeNum];
+		
+		// Add the greatest selected values
+		for (int counter = 0; counter < nodeNum; counter++) {
+			popValues[counter] = popBC.get(sampleValues.get(counter).getKey());
+			sample[counter] = sampleValues.get(counter).getValue();
 		}
 		
-		return correlations;
+		double[] retVal = {
+				Correlations.spearmansCorrelation(popValues, sample),
+				Correlations.pearsonsCorrelation(popValues, sample)
+		};
+		
+		return retVal;
 	}
 }

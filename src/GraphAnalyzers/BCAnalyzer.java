@@ -4,23 +4,20 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
+import Utils.HardCode;
 import Utils.JobTracker;
 import edu.uci.ics.jung.algorithms.importance.BetweennessCentrality;
 import edu.uci.ics.jung.graph.Graph;
 
 public class BCAnalyzer {
 	
-	static DecimalFormat dcf = new DecimalFormat("0.000");
 	final static String myHeader = "\"userid\",\"bcScore\"";
-	private static Pattern separateReg= Pattern.compile("\\,", Pattern.DOTALL);
-	
+
 	/**
 	 * Reads in the BC file of the graph
 	 * @param path - the path to the data file
@@ -41,7 +38,7 @@ public class BCAnalyzer {
 		while ((data = br.readLine()) != null) {
 			// Import in "userID, bcScore"
 			data = data.replaceAll("\"", "");
-			String[] items=separateReg.split(data);
+			String[] items = HardCode.separateReg.split(data);
 			if (items.length != 2) {
 				br.close();
 				throw new Error("Data Split was incorrectly formatted: " + data);
@@ -75,7 +72,7 @@ public class BCAnalyzer {
 		while ((data = br.readLine()) != null) {
 			// Import in "userID, bcScore"
 			data = data.replaceAll("\"", "");
-			String[] items=separateReg.split(data);
+			String[] items = HardCode.separateReg.split(data);
 			if (items.length != 2) {
 				br.close();
 				throw new Error("Data Split was incorrectly formatted: " + data);
@@ -112,7 +109,7 @@ public class BCAnalyzer {
 		double value;
 		for (String vertex : graph.getVertices()) {
 			value = cm.getVertexRankScore(vertex);
-			bw.write(vertex + "," + dcf.format(value) + "\n");
+			bw.write(vertex + "," + HardCode.dcf3.format(value) + "\n");
 			results.put(vertex, value);
 		}
 		
@@ -147,9 +144,9 @@ public class BCAnalyzer {
 		 */
 		@Override
 		public HashMap<String, Double> call() throws Exception {
-			jt.startTracking(myName + "BC Calculation");
+			jt.startTracking("BC Calculation of " + myName);
 			HashMap<String, Double> hashMap = BCAnalyzer.analyzeGraphBC(myGraph, myPath);
-			jt.endTracking(myName + "BC Calculation");			
+			jt.endTracking("BC Calculation of " + myName);			
 			return hashMap;
 		}
 	}
@@ -186,19 +183,19 @@ public class BCAnalyzer {
 			ConcurrentHashMap<String, Double> hashMap = new ConcurrentHashMap<String, Double>(myGraph.getVertexCount());
 			BetweennessCentrality<String, String> cm = new BetweennessCentrality<String, String>(myGraph);
 			cm.setRemoveRankScoresOnFinalize(false);
-			jt.startTracking(myName);
+			jt.startTracking("BC Calculation of " + myName);
 			cm.evaluate();
-			jt.endTracking(myName);
+			jt.endTracking("BC Calculation of " + myName);
 						
 			// Print out the results
-			jt.startTracking(myName + "output");
+			jt.startTracking("Output of " + myName);
 			double value;
 			for (String vertex : myGraph.getVertices()) {
 				value = cm.getVertexRankScore(vertex);
-				bw.write(vertex + "," + dcf.format(value) + "\n");
+				bw.write(vertex + "," + HardCode.dcf3.format(value) + "\n");
 				hashMap.put(vertex, value);
 			}
-			jt.endTracking(myName + "output");
+			jt.endTracking("Output of " + myName);
 			
 			// Close to writer
 			bw.close();

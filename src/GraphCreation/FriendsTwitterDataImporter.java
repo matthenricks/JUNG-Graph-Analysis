@@ -3,8 +3,8 @@ package GraphCreation;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.regex.Pattern;
 
+import Utils.HardCode;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
@@ -19,9 +19,6 @@ import edu.uci.ics.jung.graph.util.EdgeType;
 public class FriendsTwitterDataImporter implements GraphLoader {
 
 	final String myHeader = "\"user_id\",\"user_screen_name\",\"follower_id\",\"follower_screen_name\"";
-	private static final String separateRegStr="\\,";  // used in regular express
-	private static Pattern separateReg= Pattern.compile(separateRegStr, Pattern.DOTALL);
-	
 	
 	private String myPath;
 	private Graph<String, String> graph;
@@ -66,7 +63,7 @@ public class FriendsTwitterDataImporter implements GraphLoader {
 		while((data = br.readLine()) != null) {
 			// Import in "user, userID, follower, followerID"
 			data = data.replaceAll("\"", "");
-			String[] items=separateReg.split(data);
+			String[] items = HardCode.separateReg.split(data);
 			if (items.length != 4) {
 				br.close();
 				throw new Error("Data Split was incorrectly formatted: " + data);
