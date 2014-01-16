@@ -64,4 +64,11 @@ public class ErdosRenyiGraphGenerator implements GraphLoader {
 		return erg.create();
 	}
 
+	@Override
+	public String getInformation() {
+		return "ErdosRenyi Graph created from values: \n" +
+				"\tProbability: " + Utils.HardCode.dcf3.format(probability) + "\n" + 
+				"\tTotal Vertexes: " + vertNumber + "\n";
+		
+	}
 }

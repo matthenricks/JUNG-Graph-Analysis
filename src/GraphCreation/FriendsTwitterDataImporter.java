@@ -80,4 +80,9 @@ public class FriendsTwitterDataImporter implements GraphLoader {
 		br.close();
 		return graph;
 	}
+	
+	@Override
+	public String getInformation() {
+		return "Twitter Graph located at: " + myPath + "\n";
+	}
 }

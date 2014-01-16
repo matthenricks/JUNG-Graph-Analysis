@@ -21,4 +21,10 @@ public interface GraphLoader {
 	 */
 	public Graph<String, String> loadGraph() throws Error, IOException;
 	// Could use Class<? extends Graph>, but then we'd have to use NewInstance and not be able to add onto existing graphs
+
+	/**
+	 * Getter for important information about the graphLoader
+	 * @return a digest of that information
+	 */
+	public String getInformation();
 }

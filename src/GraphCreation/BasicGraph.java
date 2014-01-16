@@ -83,4 +83,10 @@ public class BasicGraph implements GraphLoader {
 		}
 	}
 	
+	@Override
+	public String getInformation() {
+		return "Basic Graph located at: " + myPath + "\n";
+	}
+
+	
 }

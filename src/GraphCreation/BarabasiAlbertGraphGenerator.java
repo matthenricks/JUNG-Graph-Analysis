@@ -100,4 +100,12 @@ public class BarabasiAlbertGraphGenerator implements GraphLoader {
 		return erg.create();
 	}
 
+	@Override
+	public String getInformation() {
+		return "Barabasi Graph built from :\n" +
+				"\tInitial Verts: " +  iVerts + "\n" + 
+				"\tNumber of Initial Edges: " +  nEdges + "\n" +
+				"\tTotal Steps: " +  tSteps + "\n";
+	}
+
 }
