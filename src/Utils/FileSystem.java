@@ -6,6 +6,27 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class FileSystem {
+	
+	/**
+	 * Finds the first open path by counting onto an existing path
+	 * @param path - the base of the path
+	 * @return an open path to write to
+	 */
+	public static File findOpenPath(File path) {
+		int counter = 0;
+		while(path.exists())
+			path = new File(path.getPath() + counter);
+		return path;
+	}
+	/**
+	 * Finds the first open path by counting onto an existing path
+	 * @param path - the base of the path
+	 * @return an open path to write to
+	 */
+	public static File findOpenPath(String path) {
+		return findOpenPath(new File(path));
+	}
+	
 	/**
 	 * Makes sure an empty folder exists at the specified path. If not, it creates one.
 	 * This will error a file or partially filled folder exist
