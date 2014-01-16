@@ -27,6 +27,7 @@ import GraphCreation.FriendsTwitterDataImporter;
 import GraphCreation.GraphLoader;
 import SamplingAlgorithms.RandomBFSSample;
 import SamplingAlgorithms.SampleMethod;
+import Utils.ArgumentReader;
 import Utils.HardCode;
 import Utils.JobTracker;
 import edu.uci.ics.jung.graph.Graph;
@@ -66,11 +67,12 @@ public class BCRunner {
 	 * Series of executors used to better orient thread priority
 	 */
 	static ExecutorService highPriorityThread, midPriorityThread, minPriorityThread;
-	static {
-		highPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.MAX_PRIORITY));
-		midPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.NORM_PRIORITY));
-		minPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.MIN_PRIORITY));
-	}
+	// Placing the below code in the actual main function
+//	static {
+//		highPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.MAX_PRIORITY));
+//		midPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.NORM_PRIORITY));
+//		minPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.MIN_PRIORITY));
+//	}
 	/**
 	 * Convenience function to stop all the executor services if there's an error
 	 */
@@ -287,51 +289,39 @@ public class BCRunner {
 	 * @throws TimeoutException 
 	 */
 	public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException, ExecutionException, TimeoutException {
-				
-		// The default limit on how long this program can take
-		TimeUnit timeOutUnit = TimeUnit.HOURS;
-		Integer timeOut = 24;
-		int sampleComparisons = 50;
+		
+		// Set up the thread executors
+		highPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.MAX_PRIORITY));
+		midPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.NORM_PRIORITY));
+		minPriorityThread = Executors.newCachedThreadPool(new Utils.HardCode.PriorityThreadFactory(Thread.MIN_PRIORITY));
+		
+		ArgumentReader loader = ArgumentReader.read(args);
 		
 		// This may be inefficient, but it's easier to keep track of
 		JobTracker mainTracker = new JobTracker();
 		mainTracker.startTracking("overall job");
 		
-		// TODO: Make this better
-		String outputDir = null;
-		if (args[0].equalsIgnoreCase("--output")) {
-			outputDir = args[1];
-		}
-		if (args[2].equals("--timeout")) {
-			try {
-			timeOutUnit = TimeUnit.valueOf(args[3]);
-			timeOut = Integer.valueOf(args[4]);
-			} catch (Exception e) {
-				e.printStackTrace();
-				System.err.print("Try one of these values instead: \n");
-				for (TimeUnit t : TimeUnit.values())
-					System.err.print(t.toString() + ",");
-			}
-		}
-		Utils.FileSystem.createFolder(outputDir);
+		// Make the overall output folder
+		Utils.FileSystem.createFolder(loader.myOutput);
 		
 		// Import in the overall graph
 		StringBuilder summary = new StringBuilder();
-		Graph<String, String> graph = importGraph(summary, args, mainTracker);
+		Graph<String, String> graph = loader.myGraphLoader.loadGraph();
+		summary.append(loader.myGraphLoader.getInformation());
 		
 		/*** BEGIN THE CONCURRENCY ***/
 		
 		// Run a thread to get the population BC
 		// This manages it being posted for the other threads to pull
-		Callable<ConcurrentHashMap<String, Double>> popThread = new BCAnalyzer.CallableGraphBC(graph, outputDir + pBcPostfix, mainTracker, "Main BC Calculation");
-		highPriorityThread.execute(new PopulationThread(popThread, timeOut, timeOutUnit));
+		Callable<ConcurrentHashMap<String, Double>> popThread = new BCAnalyzer.CallableGraphBC(graph, loader.myOutput + pBcPostfix, mainTracker, "Main BC Calculation");
+		highPriorityThread.execute(new PopulationThread(popThread, loader.myTimeOut, loader.myTimeOutUnit));
 		
 		// Run a thread to write out basic information pertaining to the graph
-		minPriorityThread.execute(new BasicInformationRunnable(mainTracker, graph, outputDir, "population"));
+		minPriorityThread.execute(new BasicInformationRunnable(mainTracker, graph, loader.myOutput, "population"));
 		
 		/** Begin the sampling **/
 		// Create the folder space for the processes
-		String sampleOverallDir = outputDir + pSamplesFolder;
+		String sampleOverallDir = loader.myOutput + pSamplesFolder;
 		Utils.FileSystem.createFolder(sampleOverallDir);
 			
 		// Hacked together class
@@ -368,7 +358,7 @@ public class BCRunner {
 					// Run the sample threads
 					sampleOutputs.put(
 							input,
-							midPriorityThread.submit(new SampleThreadRunner(sampleDir, sampleName, sampleComparisons, rndSample, graph))
+							midPriorityThread.submit(new SampleThreadRunner(sampleDir, sampleName, loader.myCorrelationSample, rndSample, graph))
 							);
 				}
 			}
@@ -379,14 +369,14 @@ public class BCRunner {
 		HashMap<inputData, double[]> correlations = new HashMap<inputData, double[]>(100);
 		try {
 			for (inputData input : sampleOutputs.keySet()) {
-				correlations.put(input, sampleOutputs.get(input).get(timeOut, timeOutUnit));
+				correlations.put(input, sampleOutputs.get(input).get(loader.myTimeOut, loader.myTimeOutUnit));
 			}
 			highPriorityThread.shutdown();
 			// This should already be finished
 			highPriorityThread.awaitTermination(30, TimeUnit.SECONDS);
 			
 			midPriorityThread.shutdown();
-			midPriorityThread.awaitTermination(timeOut, timeOutUnit);
+			midPriorityThread.awaitTermination(loader.myTimeOut, loader.myTimeOutUnit);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			stopAllThreads();
@@ -394,7 +384,7 @@ public class BCRunner {
 		}
 		
 		// Output the statistics on the correlations
-		BufferedWriter metricOutput = Utils.FileSystem.createFile(outputDir + pCorrPostfix);
+		BufferedWriter metricOutput = Utils.FileSystem.createFile(loader.myOutput + pCorrPostfix);
 		metricOutput.write("\"ReplicationID\",\"Threshold\",\"Alpha\",\"Spearmans Correlation\", Pearsons Correlation");
 		metricOutput.newLine();
 		for (inputData key : correlations.keySet()) {
@@ -410,7 +400,7 @@ public class BCRunner {
 		mainTracker.endTracking("overall job");
 		
 		// Write out the respective job times
-		BufferedWriter jobOutput = Utils.FileSystem.createFile(outputDir + pSummaryPostfix);
+		BufferedWriter jobOutput = Utils.FileSystem.createFile(loader.myOutput + pSummaryPostfix);
 		mainTracker.writeJobTimes(jobOutput);
 		jobOutput.close();
 		
@@ -430,105 +420,6 @@ public class BCRunner {
 	
 	
 	
-
-	/**
-	 * Runs through the args and attempts to load a graph. The potential values are listed below.
-	 * Additionally, a summary is returned through the StringBuilder
-	 *    --load
-	 *      twitterImport
-	 *         <path> <edgeType>
-	 *      genericImport
-	 *         <path>
-	 *      erdosRenyi
-	 *         <probability: double> <#nodes: int>
-	 *      barabasi
-	 *         <initial vertexes> <added edges per steps> <steps> <edgeType>
-	 * @param args
-	 * @param jt
-	 * @return the generated graph
-	 * @throws IOException
-	 * @throws Error - whenever parameters don't match any of the shown paths
-	 */
-	public static Graph<String, String> importGraph(StringBuilder retVal, String[] args, JobTracker jt) throws IOException, Error {
-		// Look in the arguments for the import type and it's respective variables
-		GraphLoader gL = null;
-		for (int i = 0; i < args.length; i++) {
-			if (args[i].equalsIgnoreCase("--load")) {
-				if (args[++i].equalsIgnoreCase("twitterImport")) {
-					try {
-						String dLoc = args[++i];
-						if (args[++i].equalsIgnoreCase("directed")) {
-							gL = new FriendsTwitterDataImporter(dLoc, EdgeType.DIRECTED);
-						} else if (args[i].equalsIgnoreCase("undirected")) {
-							gL = new FriendsTwitterDataImporter(dLoc, EdgeType.UNDIRECTED);
-						} else {
-							throw new Error("Edge type unhandled: " + args[i]);
-						}
-						retVal.append("The location of the twitter graph is at: " + dLoc + "\n");
-					} catch (Error e) {
-						System.err.println("Error in successive variables after twitterImport");
-						e.printStackTrace();
-					}
-				} else if (args[i].equalsIgnoreCase("genericImport")) {
-					try {
-						String dLoc = args[++i];
-						gL = new BasicGraph(dLoc);
-						retVal.append("The location of the generic graph is at: " + dLoc + "\n");
-					} catch (Error e) {
-						System.err.println("Error in successive variables after genericImport");
-						e.printStackTrace();
-					}
-				} else if (args[i].equalsIgnoreCase("erdosRenyi")) {
-					try {
-						double probability = Double.valueOf(args[++i]);
-						int number = Integer.valueOf(args[++i]);
-						gL = new ErdosRenyiGraphGenerator(probability, number);
-						retVal.append("An ErdosRenyiGraph was generated with values: probability ("  + HardCode.dcf3.format(probability) + "), " +
-								"vertex number (" + number + ")\n");
-					} catch (Error e) {
-						System.err.println("Error in successive variables after erdosRenyi");
-						e.printStackTrace();
-					}
-				} else if (args[i].equalsIgnoreCase("barabasi")) {
-					try {
-						int initialVerts = Integer.valueOf(args[++i]);
-						int addedEdgesPerStep = Integer.valueOf(args[++i]);
-						if (initialVerts < addedEdgesPerStep) {
-							throw new Error("Cannot add more edges per additional node than initial vertexes");
-						}
-						int totalSteps = Integer.valueOf(args[++i]);
-						if (args[++i].equalsIgnoreCase("directed")) {
-							gL = new BarabasiAlbertGraphGenerator(initialVerts, addedEdgesPerStep, totalSteps, EdgeType.DIRECTED);
-						} else if (args[i].equalsIgnoreCase("undirected")) {
-							gL = new BarabasiAlbertGraphGenerator(initialVerts, addedEdgesPerStep, totalSteps, EdgeType.UNDIRECTED);
-						} else {
-							throw new Error("Edge type unhandled: " + args[i]);
-						}
-						retVal.append("A BarabasiAlbertGraph was generated with values: initial vertexes ("  + initialVerts + "), " +
-								"added edges (" + addedEdgesPerStep + ") " +
-								"total steps (" + totalSteps + ") " +
-								"edge type (" + args[i] + ")\n");
-					} catch (Error e) {
-						System.err.println("Error in successive variables after erdosRenyi");
-						e.printStackTrace();
-					}
-				} else {
-					throw new Error("Unhandled graph creation type");
-				}
-			}
-		}
-		
-		if (gL == null) {
-			throw new Error("Main graph never loaded");
-		}
-		
-		// Load the graph
-		Graph<String, String> graph;
-		jt.startTracking("Main Graph Import");
-		graph = gL.loadGraph();
-		jt.endTracking("Main Graph Import");
-		return graph;
-	}
 	
 	
 	
