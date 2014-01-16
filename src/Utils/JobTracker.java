@@ -17,6 +17,8 @@ public class JobTracker {
 	
 	// TODO: Make it so we can consolidate jobs into other jobs and import JobTrackers into each other
 	
+	final int SecondToNano = 1000000000;
+	
 	/**
 	 * Abstract timer class
 	 * @author MOREPOWER
@@ -52,7 +54,7 @@ public class JobTracker {
 		@Override
 		public HashMap<String, Long> getTimes() {
 			HashMap<String, Long> times = new HashMap<String, Long>();
-			times.put("wall", end - start);
+			times.put("wall(Mili)", end - start);
 			return times;
 		}
 	}
@@ -90,9 +92,12 @@ public class JobTracker {
 		@Override
 		public HashMap<String, Long> getTimes() {
 			HashMap<String, Long> times = super.getTimes();
-			times.put("User", endUser - startUser);
-			times.put("System", (endCPU - startCPU) - (endUser - startUser));
-			times.put("CPU", endCPU - startCPU);
+			times.put("User(nano)", endUser - startUser);
+			times.put("User(seconds)", (endUser - startUser)/SecondToNano);
+			times.put("System(nano)", (endCPU - startCPU) - (endUser - startUser));
+			times.put("System(seconds)", ((endCPU - startCPU) - (endUser - startUser))/SecondToNano);
+			times.put("CPU(nano)", endCPU - startCPU);
+			times.put("CPU(seconds)", (endCPU - startCPU)/SecondToNano);
 			return times;
 		}
 	}
@@ -129,6 +134,18 @@ public class JobTracker {
 			AbstractTimer curr = timers.get(tName);
 			for (String timeType : curr.getTimes().keySet()) {
 				bw.append("\t" + timeType + ": " + curr.getTimes().get(timeType));
+				bw.newLine();
+			}
+		}
+	}
+	
+	public void writeJobTimes(BufferedWriter bw, String preFix) throws IOException {
+		for (String tName : timers.keySet()) {
+			bw.append(preFix + tName);
+			bw.newLine();
+			AbstractTimer curr = timers.get(tName);
+			for (String timeType : curr.getTimes().keySet()) {
+				bw.append(preFix + "\t" + timeType + ": " + curr.getTimes().get(timeType));
 				bw.newLine();
 			}
 		}	
