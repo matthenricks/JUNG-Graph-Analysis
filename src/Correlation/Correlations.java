@@ -29,5 +29,18 @@ public class Correlations {
 		return scr.correlation(series1, series2);
 	}
 	
+	/**
+	 * Calculates the average error of series
+	 * @param trueSeries
+	 * @param sampleSeries
+	 * @return
+	 */
+	public static double errorCalculation(double[] trueSeries, double[] sampleSeries) {
+		double error = 0.0;
+		for (int i = 0; i < trueSeries.length; i++) {
+			error += Math.pow(trueSeries[i] - sampleSeries[i], 2);
+		}
+		return (Math.sqrt(error))/trueSeries.length;
+	}
 	
 }

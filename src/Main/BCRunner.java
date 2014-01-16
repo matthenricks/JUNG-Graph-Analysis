@@ -385,13 +385,15 @@ public class BCRunner {
 		
 		// Output the statistics on the correlations
 		BufferedWriter metricOutput = Utils.FileSystem.createFile(loader.myOutput + pCorrPostfix);
-		metricOutput.write("\"ReplicationID\",\"Threshold\",\"Alpha\",\"Spearmans Correlation\", Pearsons Correlation");
+		metricOutput.write("\"ReplicationID\",\"Threshold\",\"Alpha\",\"Spearmans Correlation\", \"Pearsons Correlation\", Average Error");
 		metricOutput.newLine();
 		for (inputData key : correlations.keySet()) {
 			// Write in the input
 			metricOutput.append(key.replicationNumber + "," + HardCode.dcf3.format(key.threshold) + "," + HardCode.dcf3.format(key.alpha) + ",");
 			// Write in the output
-			metricOutput.append(HardCode.dcf3.format(correlations.get(key)[0]) + "," + HardCode.dcf3.format(correlations.get(key)[1]));
+			metricOutput.append(HardCode.dcf3.format(correlations.get(key)[0]) + "," + 
+					HardCode.dcf3.format(correlations.get(key)[1]) +
+					HardCode.dcf3.format(correlations.get(key)[2]));
 			metricOutput.newLine();
 		}
 		metricOutput.close();
