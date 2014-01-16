@@ -66,7 +66,7 @@ public class JobTracker {
 		
 		public ExactTimer() {
 			super();
-			if (!ManagementFactory.getThreadMXBean( ).isCurrentThreadCpuTimeSupported()) {
+			if (!ManagementFactory.getThreadMXBean().isCurrentThreadCpuTimeSupported()) {
 				throw new Error("Exact Timer is unsupported, use Normal Timer");
 			}
 		}
@@ -81,7 +81,7 @@ public class JobTracker {
 
 		@Override
 		public void stop() {
-			ThreadMXBean bean = ManagementFactory.getThreadMXBean( );
+			ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 		    endUser = bean.getCurrentThreadUserTime();
 			endCPU = bean.getCurrentThreadCpuTime();
 			super.stop();
@@ -106,9 +106,9 @@ public class JobTracker {
 	public void startTracking(String jobName) {
 
 		AbstractTimer temp = null;
-//		if (ManagementFactory.getThreadMXBean( ).isCurrentThreadCpuTimeSupported())
-//			temp = new ExactTimer();
-//		else
+		if (ManagementFactory.getThreadMXBean().isCurrentThreadCpuTimeSupported())
+			temp = new ExactTimer();
+		else
 			temp = new NormalTimer();
 		
 		temp.start();
