@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class BCCorrelator {
 	
-	public static class BCCorrelationThread implements Callable<double[]> {
+	public class BCCorrelationThread implements Callable<double[]> {
 
 		ConcurrentHashMap<String, Double> popBC;
 		HashMap<String, Double> sampleBC;
@@ -68,6 +68,8 @@ public class BCCorrelator {
 		
 		// Add the greatest selected values
 		for (int counter = 0; counter < nodeNum; counter++) {
+			if(sampleValues.get(counter) == null)
+				System.out.print("CHECK ME\n");
 			popValues[counter] = popBC.get(sampleValues.get(counter).getKey());
 			sample[counter] = sampleValues.get(counter).getValue();
 		}
