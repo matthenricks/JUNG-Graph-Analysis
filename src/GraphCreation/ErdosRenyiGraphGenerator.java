@@ -14,7 +14,7 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
  * @author MOREPOWER
  *
  */
-public class ErdosRenyiGraphGenerator implements GraphLoader {
+public class ErdosRenyiGraphGenerator implements GraphLoader, GeneratedGraph {
 
 	// Used to store the probability and number of nodes this will be created from
 	// expected number of edges = prob*C(n,2)

@@ -18,7 +18,7 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  * @author MOREPOWER
  *
  */
-public class BarabasiAlbertGraphGenerator implements GraphLoader {
+public class BarabasiAlbertGraphGenerator implements GraphLoader, GeneratedGraph {
 
 	static Factory<Graph<String, String>> FactoryDirected = new Factory<Graph<String,String>>() {
 		@Override
