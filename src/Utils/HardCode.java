@@ -10,6 +10,7 @@ import java.util.concurrent.ThreadFactory;
  *
  */
 public class HardCode {
+	
 
 	public static DecimalFormat dcf3 = new DecimalFormat("0.000");
 	public static DecimalFormat dcf = new DecimalFormat("00000");
