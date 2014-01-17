@@ -21,7 +21,7 @@ public class HardCode {
 	public static String pDataFix = "/data.dat";
 	
 	// Formatting variables for how doubles will be displayed
-	public static DecimalFormat dcf3 = new DecimalFormat("0.000");
+	public static DecimalFormat dcf3 = new DecimalFormat("0.00000");
 	public static DecimalFormat dcf = new DecimalFormat("00000");
 	// Quick reference to a Pattern used to decompose CSV files
 	public static Pattern separateReg= Pattern.compile("\\,", Pattern.DOTALL);

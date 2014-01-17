@@ -335,7 +335,7 @@ public class BCRunner {
 				this.replicationNumber = replicationNumber;
 			}
 			public String toString() {
-				return "RSN" + HardCode.dcf.format(threshold*100) + "-" + HardCode.dcf.format(alpha*100) + "-" + replicationNumber;
+				return "RSN" + HardCode.dcf.format(threshold*10000) + "-" + HardCode.dcf.format(alpha*10000) + "-" + replicationNumber;
 			}
 		};
 		
@@ -344,7 +344,7 @@ public class BCRunner {
 		
 		// Begin the sampling!
 		for (double threshold = 0; threshold <= 1.0; threshold += 0.2) {
-			for (double alpha = 0.01; alpha < 1.0; alpha = alpha * 2) {
+			for (double alpha = 0.0035; alpha < 1.0; alpha = alpha * 2) {
 				for (int replica = 0; replica < 5; replica++) {
 					// Hacked together to store the variables
 					inputData input = new inputData(threshold, alpha, replica);
