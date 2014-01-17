@@ -8,6 +8,7 @@ import GraphCreation.BasicGraph;
 import GraphCreation.ErdosRenyiGraphGenerator;
 import GraphCreation.FriendsTwitterDataImporter;
 import GraphCreation.GraphLoader;
+import GraphCreation.VertexTVertexImporter;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 public class ArgumentReader {
@@ -46,6 +47,8 @@ public class ArgumentReader {
 	 *         <probability: double> <#nodes: int>
 	 *      barabasi
 	 *         <initial vertexes> <added edges per steps> <steps> <edgeType>
+	 *      vertTvert
+	 *         <path> <edgeType>
 	 *    --output
 	 *      <string>
 	 *    --timeout
@@ -75,6 +78,15 @@ public class ArgumentReader {
 						}
 					} catch (Error e) {
 						System.err.println("Error in successive variables after twitterImport, use location, the graph type (Directed/Undirected)");
+						e.printStackTrace();
+					}
+				} else if (args[i].equalsIgnoreCase("vertTvert")) {
+					try {
+						String dLoc = args[++i];
+						EdgeType eType = EdgeType.valueOf(args[++i]);
+						loader.myGraphLoader = new VertexTVertexImporter(dLoc, eType);
+					} catch (Error e) {
+						System.err.println("Error in successive variables after vertTvert, use location, then graph type (Directed/Undirected)");
 						e.printStackTrace();
 					}
 				} else if (args[i].equalsIgnoreCase("genericImport")) {
