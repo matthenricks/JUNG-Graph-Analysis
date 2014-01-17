@@ -23,6 +23,19 @@ public class RandomSampleNode implements SampleMethod {
 		this.alpha = alpha;
 		seed = (new Random()).nextInt();
 	}
+	
+	protected Graph<String, String> getGraphFromInstance(Graph<String, String> parentGraph) {
+		if (parentGraph.getVertexCount() == 0 || parentGraph.getEdgeCount() == 0) 
+			throw new Error("Parent Graph must contain vertexes and edges");
+
+		if (parentGraph.getDefaultEdgeType() == EdgeType.DIRECTED) {
+			return new DirectedSparseGraph<String, String>();
+		} else if (parentGraph.getDefaultEdgeType() == EdgeType.UNDIRECTED) {
+			return new UndirectedSparseGraph<String, String>();
+		} else {
+			throw new Error("Edge Type of the parent graph is unknown");
+		}
+	}
 
 	/**
 	 * Returns a sample graph of the parent graph based off a series of BFS related to the proportion of alpha to |V|
@@ -33,18 +46,8 @@ public class RandomSampleNode implements SampleMethod {
 	 */
 	public Graph<String, String> sampleGraph(Graph<String, String> parentGraph) {
 
-		if (parentGraph.getVertexCount() == 0 || parentGraph.getEdgeCount() == 0) 
-			throw new Error("Parent Graph must contain vertexes and edges");
-
 		// Set up the sampled graph frame
-		Graph<String, String> sampledGraph;
-		if (parentGraph.getDefaultEdgeType() == EdgeType.DIRECTED) {
-			sampledGraph = new DirectedSparseGraph<String, String>();
-		} else if (parentGraph.getDefaultEdgeType() == EdgeType.UNDIRECTED) {
-			sampledGraph = new UndirectedSparseGraph<String, String>();
-		} else {
-			throw new Error("Edge Type of the parent graph is unknown");
-		}
+		Graph<String, String> sampledGraph = getGraphFromInstance(parentGraph);
 		
 		// Randomly mix up the vertices in the parent
 		List<String> vertices = new ArrayList<String>(parentGraph.getVertices());
