@@ -12,6 +12,7 @@ import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.graph.util.Pair;
 
 // TODO: Make this extend the RandomSampleNode
 public class RandomBFSSample implements SampleMethod {
@@ -106,16 +107,20 @@ public class RandomBFSSample implements SampleMethod {
 			Graph<String, String> parentGraph, HashSet<String> processed, ArrayList<String> neighbors) {
 		// Add the area around the selected node, itself and neighbors
 		sampledBFSGraph.addVertex(current_vertex);
-		processed.add(current_vertex);
-		for(String vertex: parentGraph.getNeighbors(current_vertex)) {
-			// Add new vertex (if needed)
-			if (!sampledBFSGraph.containsVertex(vertex)) {
-				sampledBFSGraph.addVertex(vertex);
-				neighbors.add(vertex);
+		for(String edge: parentGraph.getIncidentEdges(current_vertex)) {
+			if (!sampledBFSGraph.containsEdge(edge)) {
+				// Add the new vertex and edge to the sample graph
+				Pair<String> edges = parentGraph.getEndpoints(edge);
+				if (edges.getFirst() == current_vertex) {
+					if (!sampledBFSGraph.containsVertex(edges.getSecond()))
+						sampledBFSGraph.addVertex(edges.getSecond());
+					sampledBFSGraph.addEdge(edge, current_vertex, edges.getSecond());
+				} else {
+					if (!sampledBFSGraph.containsVertex(edges.getFirst()))
+						sampledBFSGraph.addVertex(edges.getFirst());
+					sampledBFSGraph.addEdge(edge, edges.getFirst(), current_vertex);
+				}
 			}
-			String nEdge = sampledBFSGraph.findEdge(vertex, current_vertex);
-			if (!sampledBFSGraph.containsEdge(nEdge))
-				sampledBFSGraph.addEdge(parentGraph.findEdge(vertex, current_vertex), vertex, current_vertex, parentGraph.getDefaultEdgeType());
 		}
 		return true;
 	}

@@ -9,6 +9,7 @@ import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
+import edu.uci.ics.jung.graph.util.Pair;
 
 public class RandomSampleNode implements SampleMethod {
 	
@@ -57,13 +58,20 @@ public class RandomSampleNode implements SampleMethod {
 		for(int i = 0; i < Math.ceil(alpha*parentGraph.getVertexCount()); i++) {
 			// Add the next vertex and it's BFS
 			sampledGraph.addVertex(vertices.get(i));
-			for(String vertex: parentGraph.getNeighbors(vertices.get(i))) {
-				// Add new vertex (if needed)
-				if (!sampledGraph.containsVertex(vertex))
-					sampledGraph.addVertex(vertex);
-				String nEdge = sampledGraph.findEdge(vertex, vertices.get(i));
-				if (!sampledGraph.containsEdge(nEdge))
-					sampledGraph.addEdge(parentGraph.findEdge(vertex, vertices.get(i)), vertex, vertices.get(i), parentGraph.getDefaultEdgeType());
+			for(String edge: parentGraph.getIncidentEdges(vertices.get(i))) {
+				if (!sampledGraph.containsEdge(edge)) {
+					// Add the new vertex and edge to the sample graph
+					Pair<String> edges = parentGraph.getEndpoints(edge);
+					if (edges.getFirst() == vertices.get(i)) {
+						if (!sampledGraph.containsVertex(edges.getSecond()))
+							sampledGraph.addVertex(edges.getSecond());
+						sampledGraph.addEdge(edge, vertices.get(i), edges.getSecond());
+					} else {
+						if (!sampledGraph.containsVertex(edges.getFirst()))
+							sampledGraph.addVertex(edges.getFirst());
+						sampledGraph.addEdge(edge, edges.getFirst(), vertices.get(i));
+					}
+				}
 			}
 		}
 		

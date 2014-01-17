@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 
 import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.util.Pair;
 
 /***
  * This class is a sampling algorithm that samples a graph with a mixture of BFS and Random Node sampling in addition to a max degree taken bias
@@ -43,18 +44,25 @@ public class RDBFSSample extends RandomBFSSample {
 		processed.add(current_vertex);
 		
 		// Shuffle the neighbors so each has an even probability of being randomly selected
-		ArrayList<String> currNeighbors = new ArrayList<String>(parentGraph.getNeighbors(current_vertex));
+		// This obtains all of the connecting edges to this node
+		ArrayList<String> currNeighbors = new ArrayList<String>(parentGraph.getIncidentEdges(current_vertex));
+		// NOTE: This will count both input and output
 		Collections.shuffle(currNeighbors);
 		for(int counter = 0; counter < currNeighbors.size() && counter < maxDegree; counter++) {
-			String vertex = currNeighbors.get(counter);
-			// Add new vertex (if needed)
-			if (!sampledBFSGraph.containsVertex(vertex)) {
-				sampledBFSGraph.addVertex(vertex);
-				neighbors.add(vertex);
+			String edge = currNeighbors.get(counter);
+			if (!sampledBFSGraph.containsEdge(edge)) {
+				// Add the new vertex and edge to the sample graph
+				Pair<String> edges = parentGraph.getEndpoints(edge);
+				if (edges.getFirst() == current_vertex) {
+					if (!sampledBFSGraph.containsVertex(edges.getSecond()))
+						sampledBFSGraph.addVertex(edges.getSecond());
+					sampledBFSGraph.addEdge(edge, current_vertex, edges.getSecond());
+				} else {
+					if (!sampledBFSGraph.containsVertex(edges.getFirst()))
+						sampledBFSGraph.addVertex(edges.getFirst());
+					sampledBFSGraph.addEdge(edge, edges.getFirst(), current_vertex);
+				}
 			}
-			String nEdge = sampledBFSGraph.findEdge(vertex, current_vertex);
-			if (!sampledBFSGraph.containsEdge(nEdge))
-				sampledBFSGraph.addEdge(parentGraph.findEdge(vertex, current_vertex), vertex, current_vertex, parentGraph.getDefaultEdgeType());
 		}
 		
 		return true;
