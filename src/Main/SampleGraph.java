@@ -70,12 +70,12 @@ public class SampleGraph {
 						EdgeSize += sample.getEdgeCount();
 	
 						sampleTracker.startTracking("Writing of " + sampleName + ":" + replica);
-						BasicGraph.exportGraph(sample, sampleName);
+						BasicGraph.exportGraph(sample, loader.myOutput + sampleName);
 						sampleTracker.endTracking("Writing of " + sampleName + ":" + replica);
 					}
 					
 					String sampleOut = "Summary-" + HardCode.dcf.format(percentMaxLimit*100) + "P-" + HardCode.dcf.format(threshold*10000) + "-" + HardCode.dcf.format(alpha*10000);
-					BufferedWriter bw = Utils.FileSystem.createFile(sampleOut);
+					BufferedWriter bw = Utils.FileSystem.createFile(loader.myOutput + sampleOut);
 					bw.append("Average Node Size = " + NodeSize/5);
 					bw.newLine();
 					bw.append("Average Edge Size = " + EdgeSize/5);
