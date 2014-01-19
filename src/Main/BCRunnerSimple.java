@@ -314,10 +314,10 @@ public class BCRunnerSimple {
 		int corrNumber = (int)Math.floor(graph.getVertexCount() * loader.myCorrelationPercent);
 		if (corrNumber < 1) corrNumber = 1;		
 		
-		int totalIterations = 6*9*3*3;
+		int totalIterations = 6*9*4*3;
 		int inputOn = 0;
-		inputData[] inputs = new inputData[totalIterations];
-		double[][] results = new double[totalIterations][3];
+		ArrayList<inputData> inputs = new ArrayList<inputData>(totalIterations);
+		ArrayList<double[]> results = new ArrayList<double[]>(totalIterations);
 		
 		// Begin the sampling!
 		for (double threshold = 0; threshold <= 1.0; threshold += 0.2) {
@@ -349,11 +349,11 @@ public class BCRunnerSimple {
 						// Select the sampling method
 						RDBFSSample rndSample = new RDBFSSample(alpha, threshold, maxEdgeAdd);
 						// Run the sample threads
-						inputs[inputOn + replica] = input;
+						inputs.set(inputOn + replica, input);
 						tasks.add(new SampleThreadRunner(sampleDir, sampleName, corrNumber, rndSample, graph));
 					}
 					for (Future<double[]> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-						results[inputOn++] = retVal.get();
+						results.set(inputOn++, retVal.get());
 					}
 					tasks.clear();
 				}
@@ -364,14 +364,14 @@ public class BCRunnerSimple {
 		BufferedWriter metricOutput = Utils.FileSystem.createFile(loader.myOutput + pCorrPostfix);
 		metricOutput.write("\"ReplicationID\",\"Edge-Percentage\",\"Threshold\",\"Alpha\",\"Spearmans Correlation\", \"Pearsons Correlation\", Average Error");
 		metricOutput.newLine();
-		for (inputOn = 0; inputOn < results.length; inputOn++) {
-			inputData key = inputs[inputOn];
+		for (inputOn = 0; inputOn < results.size(); inputOn++) {
+			inputData key = inputs.get(inputOn);
 			if (key == null)
 				break;
 			// Write in the input
 			metricOutput.append(key.replicationNumber + "," + HardCode.dcf3.format(key.maxSize) + "," + HardCode.dcf3.format(key.threshold) + "," + HardCode.dcf3.format(key.alpha) + ",");
 			
-			double[] corr = results[inputOn];
+			double[] corr = results.get(inputOn);
 			// Write in the output
 			metricOutput.append(HardCode.dcf3.format(corr[0]) + "," + 
 					HardCode.dcf3.format(corr[1]) +
