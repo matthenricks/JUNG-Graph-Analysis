@@ -47,7 +47,7 @@ public class ArgumentReader {
 	 *      genericImport
 	 *         <path>
 	 *      erdosRenyi
-	 *         <probability: double> <#nodes: int>
+	 *         <#nodes: int> <probability: double>
 	 *      barabasi
 	 *         <initial vertexes> <added edges per steps> <steps> <edgeType>
 	 *      vertTvert
@@ -107,8 +107,8 @@ public class ArgumentReader {
 					}
 				} else if (args[i].equalsIgnoreCase("erdosRenyi")) {
 					try {
-						double probability = Double.valueOf(args[++i]);
 						int number = Integer.valueOf(args[++i]);
+						double probability = Double.valueOf(args[++i]);
 						loader.myGraphLoader = new ErdosRenyiGraphGenerator(probability, number);
 					} catch (Error e) {
 						System.err.println("Error in successive variables after erdosRenyi");

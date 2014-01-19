@@ -328,8 +328,10 @@ public class BCRunnerSimple {
 				String aFolder = tFolder + "/" + "alpha" + HardCode.dcf.format(alpha * 10000);
 				Utils.FileSystem.createFolder(aFolder);
 				// Now set the max sample
-				for (double maxSample = 0.2; maxSample <= 1.0; maxSample += 0.4) {
-					int maxEdgeAdd = Math.max((int)Math.ceil(maxSample/alpha) - 1, 1);
+				// TODO: Make this boundless
+				for (double maxSample = 0.2; maxSample <= 1.4; maxSample += 0.4) {
+					// Easy way of doing a different version of max
+					int maxEdgeAdd = (maxSample == 1.4) ? Integer.MAX_VALUE : Math.max((int)Math.ceil(maxSample/alpha) - 1, 1);
 					String mFolder = aFolder + "/max" + HardCode.dcf.format(maxSample * 10000);
 					Utils.FileSystem.createFolder(mFolder);
 					
