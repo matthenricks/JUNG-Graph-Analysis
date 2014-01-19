@@ -20,6 +20,7 @@ import Correlation.BCCorrelator;
 import GraphAnalyzers.BCAnalyzer;
 import GraphAnalyzers.WCCSizeAnalysis;
 import GraphCreation.BasicGraph;
+import GraphCreation.GeneratedGraph;
 import SamplingAlgorithms.RDBFSSample;
 import SamplingAlgorithms.SampleMethod;
 import Utils.ArgumentReader;
@@ -270,8 +271,14 @@ public class BCRunnerSimple {
 		Graph<String, String> graph = loader.myGraphLoader.loadGraph();
 		summary.append(loader.myGraphLoader.getInformation());
 		
-		/*** BEGIN THE CONCURRENCY ***/
-		
+		// If the graph was generated, export that graph
+		if (loader.myGraphLoader instanceof GeneratedGraph) {
+			mainTracker.startTracking("Export Generated Graph");
+			BasicGraph.exportGraph(graph, loader.myOutput + HardCode.pDataFix);
+			mainTracker.endTracking("Export Generated Graph");
+		}
+				
+		/*** BEGIN THE CONCURRENCY ***/		
 		// Either run a thread to load the BC, or import in a finished BC import
 		if (loader.myPopBCPath == null) {
 			Callable<ConcurrentHashMap<String, Double>> popThread = new BCAnalyzer.CallableGraphBC(graph, loader.myOutput + pBcPostfix, mainTracker, "Main BC Calculation");
@@ -340,7 +347,7 @@ public class BCRunnerSimple {
 					// TODO: This is currently how it's threaded... This could be improved with a function
 					for (int replica = 0; replica < 3; replica++) {
 						// Hacked together to store the variables
-						inputData input = new inputData(threshold, alpha, maxEdgeAdd, replica);
+						inputData input = new inputData(threshold, alpha, maxSample, replica);
 						// Uniquely name this version and create its folder
 						String sampleName = input.toString();
 						String sampleDir = mFolder + "/" + sampleName;
