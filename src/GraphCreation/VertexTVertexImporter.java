@@ -17,13 +17,15 @@ import edu.uci.ics.jung.graph.util.EdgeType;
 public class VertexTVertexImporter implements GraphLoader {
 
 	final String myIgnore = "#";
-	final String mySplit = "\t";
 	
+	String mySplit = "\t";
 	String path;
 	EdgeType edgeType;
-	public VertexTVertexImporter(String path, EdgeType edgeType) {
+	
+	public VertexTVertexImporter(String path, EdgeType edgeType, String split) {
 		this.path = path;
 		this.edgeType = edgeType;
+		this.mySplit = split;
 	}
 	
 	protected Graph<String, String> generateGraph() {

@@ -87,6 +87,40 @@ public class BCAnalyzer {
 	}
 	
 	/**
+	 * Reads in the population BC file of the graph
+	 * @param path - the path to the data file
+	 * @return - a HashMap<String, Double> to compare against the other graph
+	 * @throws IOException
+	 */
+	public static ConcurrentHashMap<String, Double> readGraphBCConcurr(String path) throws IOException {
+		// First create the reader
+		BufferedReader br = new BufferedReader(new FileReader(path));
+		
+		String data;
+		if (!(data = br.readLine()).equals(myHeader)) {
+			br.close();
+			throw new Error("PopulationBC Import Doesn't Match Header: " + myHeader);
+		}
+		
+		ConcurrentHashMap<String, Double> result = new ConcurrentHashMap<String, Double>();
+		while ((data = br.readLine()) != null) {
+			// Import in "userID, bcScore"
+			data = data.replaceAll("\"", "");
+			String[] items = HardCode.separateReg.split(data);
+			if (items.length != 2) {
+				br.close();
+				throw new Error("Data Split was incorrectly formatted: " + data);
+			}
+			
+			result.put(items[0].trim(), Double.valueOf(items[1].trim()));
+		}
+
+		br.close();
+		
+		return result;
+	}
+	
+	/**
 	 * Analyze and write out the BC of the graph
 	 * @param graph
 	 * @param path - the location this will write the BC to

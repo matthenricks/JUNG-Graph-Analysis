@@ -55,10 +55,10 @@ public class SampleGraph {
 					int NodeSize = 0;
 					int EdgeSize = 0;
 					
+					String sampleName = "Sample-" + HardCode.dcf.format(percentMaxLimit*100) + "P-" + HardCode.dcf.format(threshold*10000) + "-" + HardCode.dcf.format(alpha*10000);
+					Utils.FileSystem.createFolder(loader.myOutput + "/" + sampleName);
+					
 					for (int replica = 0; replica < 5; replica++) {
-						// Uniquely name this version and create its folder
-						String sampleName = "Sample-" + HardCode.dcf.format(percentMaxLimit*100) + "P-" + HardCode.dcf.format(threshold*10000) + "-" + HardCode.dcf.format(alpha*10000) + "-" + replica;
-						
 						// Select the sampling method
 						SampleMethod rndSample = new RDBFSSample(alpha, threshold, maxLimit);
 						// First we need to actually generate the sample graph
@@ -70,12 +70,12 @@ public class SampleGraph {
 						EdgeSize += sample.getEdgeCount();
 	
 						sampleTracker.startTracking("Writing of " + sampleName + ":" + replica);
-						BasicGraph.exportGraph(sample, loader.myOutput + sampleName);
+						BasicGraph.exportGraph(sample, loader.myOutput + "/" + sampleName + "/" + replica + ".dat");
 						sampleTracker.endTracking("Writing of " + sampleName + ":" + replica);
 					}
 					
 					String sampleOut = "Summary-" + HardCode.dcf.format(percentMaxLimit*100) + "P-" + HardCode.dcf.format(threshold*10000) + "-" + HardCode.dcf.format(alpha*10000);
-					BufferedWriter bw = Utils.FileSystem.createFile(loader.myOutput + "/" + sampleOut);
+					BufferedWriter bw = Utils.FileSystem.createFile(loader.myOutput + "/" + sampleName + "/" + sampleOut);
 					bw.append("Average Node Size = " + NodeSize/5);
 					bw.newLine();
 					bw.append("Average Edge Size = " + EdgeSize/5);

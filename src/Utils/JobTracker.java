@@ -4,7 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -27,7 +27,7 @@ public class JobTracker {
 	private abstract class AbstractTimer {
 		public abstract void start();
 		public abstract void stop();
-		public abstract HashMap<String, Long> getTimes();
+		public abstract LinkedHashMap<String, Long> getTimes();
 	}
 
 	/**
@@ -52,8 +52,8 @@ public class JobTracker {
 		}
 
 		@Override
-		public HashMap<String, Long> getTimes() {
-			HashMap<String, Long> times = new HashMap<String, Long>();
+		public LinkedHashMap<String, Long> getTimes() {
+			LinkedHashMap<String, Long> times = new LinkedHashMap<String, Long>();
 			times.put("wall(Mili)", end - start);
 			return times;
 		}
@@ -90,8 +90,8 @@ public class JobTracker {
 		}
 
 		@Override
-		public HashMap<String, Long> getTimes() {
-			HashMap<String, Long> times = super.getTimes();
+		public LinkedHashMap<String, Long> getTimes() {
+			LinkedHashMap<String, Long> times = super.getTimes();
 			times.put("User(nano)", endUser - startUser);
 			times.put("User(seconds)", (endUser - startUser)/SecondToNano);
 			times.put("System(nano)", (endCPU - startCPU) - (endUser - startUser));

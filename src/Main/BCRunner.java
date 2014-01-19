@@ -311,10 +311,13 @@ public class BCRunner {
 		
 		/*** BEGIN THE CONCURRENCY ***/
 		
-		// Run a thread to get the population BC
-		// This manages it being posted for the other threads to pull
-		Callable<ConcurrentHashMap<String, Double>> popThread = new BCAnalyzer.CallableGraphBC(graph, loader.myOutput + pBcPostfix, mainTracker, "Main BC Calculation");
-		highPriorityThread.execute(new PopulationThread(popThread, loader.myTimeOut, loader.myTimeOutUnit));
+		// Either run a thread to load the BC, or import in a finished BC import
+		if (loader.myPopBCPath == null) {
+			Callable<ConcurrentHashMap<String, Double>> popThread = new BCAnalyzer.CallableGraphBC(graph, loader.myOutput + pBcPostfix, mainTracker, "Main BC Calculation");
+			highPriorityThread.execute(new PopulationThread(popThread, loader.myTimeOut, loader.myTimeOutUnit));
+		} else {
+			setBCPop(BCAnalyzer.readGraphBCConcurr(loader.myPopBCPath));
+		}
 		
 		// Run a thread to write out basic information pertaining to the graph
 		minPriorityThread.execute(new BasicInformationRunnable(mainTracker, graph, loader.myOutput, "population"));
@@ -342,6 +345,10 @@ public class BCRunner {
 		// Map to correlate the names of the samples to their respective outputs
 		HashMap<inputData, Future<double[]>> sampleOutputs = new HashMap<inputData, Future<double[]>>(10);
 		
+		// Get the amount of nodes in the sample to correlate (on max)
+		int corrNumber = (int)Math.floor(graph.getVertexCount() * loader.myCorrelationPercent);
+		if (corrNumber < 1) corrNumber = 1;
+		
 		// Begin the sampling!
 		for (double threshold = 0; threshold <= 1.0; threshold += 0.2) {
 			for (double alpha = 0.0035; alpha < 1.0; alpha = alpha * 2) {
@@ -358,7 +365,7 @@ public class BCRunner {
 					// Run the sample threads
 					sampleOutputs.put(
 							input,
-							midPriorityThread.submit(new SampleThreadRunner(sampleDir, sampleName, loader.myCorrelationSample, rndSample, graph))
+							midPriorityThread.submit(new SampleThreadRunner(sampleDir, sampleName, corrNumber, rndSample, graph))
 							);
 				}
 			}

@@ -17,12 +17,14 @@ public class ArgumentReader {
 	private static String sGraphLoaderHeader = "--load";
 	private static String sTimeUnitHeader = "--timeout";
 	private static String sCorrelationSampleHeader = "--corrSize";
+	private static String sPopBCPath = "--popBC";
 	
 	public GraphLoader myGraphLoader;
 	public String myOutput;
 	public int myTimeOut;
 	public TimeUnit myTimeOutUnit;
-	public int myCorrelationSample;
+	public double myCorrelationPercent; // Percent of the population that bounds how much of the sample can be processed
+	public String myPopBCPath;
 	
 	/***
 	 * Loads the default values for the arguments to be entered
@@ -32,7 +34,8 @@ public class ArgumentReader {
 		myOutput = Utils.FileSystem.findOpenPath("Test/DefaultOutput/").toString();
 		myTimeOut = 1;
 		myTimeOutUnit = TimeUnit.HOURS;
-		myCorrelationSample = 1000;
+		myCorrelationPercent = 1.0;
+		myPopBCPath = null;
 	}
 
 	/**
@@ -54,7 +57,9 @@ public class ArgumentReader {
 	 *    --timeout
 	 *      <int of time> <timeunit>
 	 *    --corrSize
-	 *      <int for corrSize>
+	 *      <corrSize :: double>
+	 *    --popBC
+	 *      <path to CSV :: String>
 	 * @param args
 	 * @return the arguments read in
 	 * @throws IOException
@@ -65,7 +70,9 @@ public class ArgumentReader {
 		ArgumentReader loader = new ArgumentReader();
 		
 		for (int i = 0; i < args.length; i++) {
-			if (args[i].equalsIgnoreCase(sGraphLoaderHeader)) {
+			if (args[i].equalsIgnoreCase(sPopBCPath)) {
+				loader.myPopBCPath = args[++i];
+			} else if (args[i].equalsIgnoreCase(sGraphLoaderHeader)) {
 				if (args[++i].equalsIgnoreCase("twitterImport")) {
 					try {
 						String dLoc = args[++i];
@@ -84,9 +91,10 @@ public class ArgumentReader {
 					try {
 						String dLoc = args[++i];
 						EdgeType eType = EdgeType.valueOf(args[++i]);
-						loader.myGraphLoader = new VertexTVertexImporter(dLoc, eType);
+						String split = args[++i];
+						loader.myGraphLoader = new VertexTVertexImporter(dLoc, eType, split);
 					} catch (Error e) {
-						System.err.println("Error in successive variables after vertTvert, use location, then graph type (Directed/Undirected)");
+						System.err.println("Error in successive variables after vertTvert, use location, then graph type (Directed/Undirected), then split character");
 						e.printStackTrace();
 					}
 				} else if (args[i].equalsIgnoreCase("genericImport")) {
@@ -143,9 +151,12 @@ public class ArgumentReader {
 				}
 			} else if (args[i].equalsIgnoreCase(sCorrelationSampleHeader)) {
 				try {
-					loader.myCorrelationSample = Integer.valueOf(args[++i]);
+					loader.myCorrelationPercent = Double.valueOf(args[++i]);
+					if (loader.myCorrelationPercent > 1 || loader.myCorrelationPercent < 0) {
+						throw new Error("Correlation Percent must be a percentage value");
+					}
 				} catch (Exception e) {
-					System.err.println("The correlation value must be an integer constant");
+					System.err.println("The correlation value must be a double constant");
 					e.printStackTrace();
 				}
 			}
