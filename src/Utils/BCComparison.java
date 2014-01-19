@@ -23,9 +23,7 @@ public class BCComparison {
 		String pathA = args[0];
 		String pathB = args[1];
 		BufferedWriter output = Utils.FileSystem.createFile(args[2]);
-		if (pathA == null || pathB == null)
-			throw new Error("This function must accept 2 paths to the csv and an output for the result");
-		
+				
 		HashMap<String, Double> seriesA = BCAnalyzer.readGraphBC(pathA);
 		HashMap<String, Double> seriesB = BCAnalyzer.readGraphBC(pathB);
 		
