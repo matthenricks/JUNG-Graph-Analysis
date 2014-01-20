@@ -369,7 +369,6 @@ public class BCRunner {
 							);
 				}
 			}
-			break;
 		}
 		
 		// Wait for everything to finish, getting all the correlation values

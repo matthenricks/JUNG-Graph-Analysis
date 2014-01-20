@@ -322,7 +322,6 @@ public class BCRunnerSimple {
 		if (corrNumber < 1) corrNumber = 1;		
 		
 		int totalIterations = 6*9*4*3;
-		int inputOn = 0;
 		ArrayList<inputData> inputs = new ArrayList<inputData>(totalIterations);
 		ArrayList<double[]> results = new ArrayList<double[]>(totalIterations);
 		
@@ -356,11 +355,11 @@ public class BCRunnerSimple {
 						// Select the sampling method
 						RDBFSSample rndSample = new RDBFSSample(alpha, threshold, maxEdgeAdd);
 						// Run the sample threads
-						inputs.set(inputOn + replica, input);
+						inputs.add(input);
 						tasks.add(new SampleThreadRunner(sampleDir, sampleName, corrNumber, rndSample, graph));
 					}
 					for (Future<double[]> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-						results.set(inputOn++, retVal.get());
+						results.add(retVal.get());
 					}
 					tasks.clear();
 				}
@@ -371,7 +370,7 @@ public class BCRunnerSimple {
 		BufferedWriter metricOutput = Utils.FileSystem.createFile(loader.myOutput + pCorrPostfix);
 		metricOutput.write("\"ReplicationID\",\"Edge-Percentage\",\"Threshold\",\"Alpha\",\"Spearmans Correlation\", \"Pearsons Correlation\", Average Error");
 		metricOutput.newLine();
-		for (inputOn = 0; inputOn < results.size(); inputOn++) {
+		for (int inputOn = 0; inputOn < results.size(); inputOn++) {
 			inputData key = inputs.get(inputOn);
 			if (key == null)
 				break;
