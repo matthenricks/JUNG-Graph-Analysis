@@ -380,7 +380,7 @@ public class BCRunnerSimple {
 			double[] corr = results.get(inputOn);
 			// Write in the output
 			metricOutput.append(HardCode.dcf3.format(corr[0]) + "," + 
-					HardCode.dcf3.format(corr[1]) +
+					HardCode.dcf3.format(corr[1]) + "," +
 					HardCode.dcf3.format(corr[2]));
 			metricOutput.newLine();
 		}
