@@ -63,7 +63,8 @@ public class SampleGraph {
 						SampleMethod rndSample = new RDBFSSample(alpha, threshold, maxLimit);
 						// First we need to actually generate the sample graph
 						sampleTracker.startTracking("Sampling of " + sampleName + ":" + replica);
-						Graph<String, String> sample = rndSample.sampleGraph(graph);
+						rndSample.sampleGraph(graph);
+						Graph<String, String> sample = rndSample.getGraph();
 						sampleTracker.endTracking("Sampling of " + sampleName + ":" + replica);
 						
 						NodeSize += sample.getVertexCount();

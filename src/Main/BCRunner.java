@@ -229,7 +229,8 @@ public class BCRunner {
 			JobTracker sampleTracker = new JobTracker();
 			// First we need to actually generate the sample graph
 			sampleTracker.startTracking("Initial sampling of " + sampleName);
-			Graph<String, String> sample = sampleMethod.sampleGraph(parentGraph);
+			sampleMethod.sampleGraph(parentGraph);
+			Graph<String, String> sample = sampleMethod.getGraph();
 			sampleTracker.endTracking("Initial sampling of " + sampleName);
 			
 			/** Now begin the analysis **/

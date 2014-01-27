@@ -11,6 +11,9 @@ public class CSV_Builder_Objects {
 		public CSV_Double(Double value) {
 			this.value = value;
 		}
+		public CSV_Double(double value) {
+			this.value = value;
+		}
 		@Override
 		public String toString() {
 			return HardCode.dcf3.format(value);
@@ -20,6 +23,9 @@ public class CSV_Builder_Objects {
 	public static class CSV_Percent extends Object {
 		Double value;
 		public CSV_Percent(Double value) {
+			this.value = value;
+		}
+		public CSV_Percent(double value) {
 			this.value = value;
 		}
 		@Override

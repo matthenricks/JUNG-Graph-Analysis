@@ -168,7 +168,8 @@ public class BCRunnerSimple {
 		
 		private String sampleDir, sampleName;
 		private Graph<String, String> parentGraph;
-		private SampleMethod sampleMethod;
+		private RDBFSSample sampleMethod;
+		private Integer ID;
 		
 		/**
 		 * Constructor for the sample runner thread. This involves the thread management of sampling, analysis, and correlation.
@@ -178,85 +179,107 @@ public class BCRunnerSimple {
 		 * @param parentGraph - the parent graph to be sampled
 		 * @param executorService - the executor (this isn't necessarily needed)
 		 */
-		public SampleThreadRunner(String sampleDir, String sampleName, SampleMethod sampleMethod, 
-				Graph<String, String> parentGraph) {			
+		public SampleThreadRunner(String sampleDir, String sampleName, RDBFSSample sampleMethod, 
+				Graph<String, String> parentGraph, Integer ID) {			
 			this.sampleDir = sampleDir;
 			this.sampleName = sampleName;
 			this.sampleMethod = sampleMethod;
 			this.parentGraph = parentGraph;
+			this.ID = ID;
 		}
 
 		@Override
-		// nodes, edges, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+		// ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
 		public CSV_Builder call() throws Exception {
-			// Record it's own job stuff in here!
-			JobTracker sampleTracker = new JobTracker();
-			// First we need to actually generate the sample graph
-			sampleTracker.startTracking("Initial sampling of " + sampleName);
-			Graph<String, String> sample = sampleMethod.sampleGraph(parentGraph);
-			sampleTracker.endTracking("Initial sampling of " + sampleName);
+			// Use the ID to consolidate everything together
+			CSV_Builder cID = new CSV_Builder(this.ID);
 			
-			/** Now begin the analysis **/
-			// Write out the  write out the basic information pertaining to the graph
-			CSV_Builder cWCC = BCRunnerSimple.writeBasicInformation(sampleTracker, sample, sampleDir, sampleName);
+			// Make this entire thing an alpha loop
+			for (double alpha = 0.0035; alpha < 1.0; alpha = alpha * 2) {
+				// Record it's own job stuff in here!
+				JobTracker sampleTracker = new JobTracker();
+				
+				// Now set the max sample
+				sampleMethod.changeAlpha(alpha);
 			
-			sampleTracker.startTracking("BC Calculation of " + sampleName);
-			HashMap<String, Double> sampleBC = BCAnalyzer.analyzeGraphBC(sample, sampleDir + pBcPostfix);
-			sampleTracker.endTracking("BC Calculation of " + sampleName);
-			
-			try {
-				// Output the graph in the down-time
-				BasicGraph.exportGraph(sample, sampleDir + pSampleData);
+				// First we need to actually generate the sample graph
+				sampleTracker.startTracking("Initial sampling of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
+				// Iterations, Real Alpha, Real Threshold
+				CSV_Builder cSamplingStats = sampleMethod.sampleGraph(parentGraph);
+				Graph<String, String> sample = sampleMethod.getGraph();
+				sampleTracker.endTracking("Initial sampling of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
+
 				
-				/** Now begin the comparison **/
-				// Pull the population BC values
-				ConcurrentHashMap<String, Double> popBC = pullBCPop();
+				String aFolder = sampleDir + "/" + "alpha" + HardCode.dcf.format(alpha * 10000);
+				Utils.FileSystem.createFolder(aFolder);
 				
-				// Generate the BC Builder to link
-				CSV_Builder cBCDur = new CSV_Builder(sampleTracker.getJobTime("BC Calculation of " + sampleName));
+				/** Now begin the analysis **/
+				// Write out the  write out the basic information pertaining to the graph
+				CSV_Builder cWCC = BCRunnerSimple.writeBasicInformation(sampleTracker, sample, aFolder, sampleName);
 				
-				// nodes, edges, WCC, BC Duration, corrSize(#), corrSize(%), Spearmans, Pearsons, Error
-				for (double corrSize = 0.1; corrSize < 1.0; corrSize += 0.1) {
-					int compNumber = (int)Math.floor(parentGraph.getVertexCount() * corrSize);
-					if (compNumber < 1) compNumber = 1;
+				sampleTracker.startTracking("BC Calculation of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
+				HashMap<String, Double> sampleBC = BCAnalyzer.analyzeGraphBC(sample, aFolder + pBcPostfix);
+				sampleTracker.endTracking("BC Calculation of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
+				
+				try {
+					// Output the graph in the down-time
+					BasicGraph.exportGraph(sample, aFolder + pSampleData);
 					
-					sampleTracker.startTracking("Correlate Sample: " + corrSize + sampleName);
-					double[] result = BCCorrelator.runBCComparison(
-							popBC,
-							sampleBC,
-							compNumber < sampleBC.size() ? compNumber : sampleBC.size());
-					sampleTracker.endTracking("Correlate Sample: " + corrSize + sampleName);
-
-					CSV_Builder cCorrSize = new CSV_Builder(compNumber, // Added corrSize(#)
-							new CSV_Builder(new CSV_Double(corrSize), // Added corrSize(%)
-								new CSV_Builder(new CSV_Double(result[0]), // Added spearmans
-									new CSV_Builder(new CSV_Double(result[1]), // Added pearsons
-											new CSV_Builder(new CSV_Double(result[2])))))); // Added error
-
-					// Link the corrSize to the BCDuration
-					cBCDur.LinkTo(cCorrSize);
+					/** Now begin the comparison **/ 
+					// Pull the population BC values
+					ConcurrentHashMap<String, Double> popBC = pullBCPop();
+					
+					// Generate the BC Builder to link
+					CSV_Builder cBCDur = new CSV_Builder(sampleTracker.getJobTime("BC Calculation of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000)));
+					
+					// sample nodes, sample edges, WCC, [BC Duration, corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
+					for (double corrSize = 0.1; corrSize < 1.0; corrSize += 0.1) {
+						int compNumber = (int)Math.floor(parentGraph.getVertexCount() * corrSize);
+						if (compNumber < 1) compNumber = 1;
+						
+						sampleTracker.startTracking("Correlate Sample: " + corrSize + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
+						double[] result = BCCorrelator.runBCComparison(
+								popBC,
+								sampleBC,
+								compNumber < sampleBC.size() ? compNumber : sampleBC.size());
+						sampleTracker.endTracking("Correlate Sample: " + corrSize + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
+	
+						CSV_Builder cCorrSize = new CSV_Builder(compNumber, // Added corrSize(#)
+								new CSV_Builder(new CSV_Double(corrSize), // Added corrSize(%)
+									new CSV_Builder(new CSV_Double(result[0]), // Added spearmans
+										new CSV_Builder(new CSV_Double(result[1]), // Added pearsons
+												new CSV_Builder(new CSV_Double(result[2])))))); // Added error
+	
+						// Link the corrSize to the BCDuration
+						cBCDur.LinkTo(cCorrSize);
+					}
+					
+					// Write out the respective job times
+					BufferedWriter jobOutput = Utils.FileSystem.createFile(aFolder + pSummaryPostfix);
+					sampleTracker.writeJobTimes(jobOutput);
+					jobOutput.close();
+					
+					/** Return all the pertinent information by using the CSV Builders **/
+					// sample nodes, sample edges, WCC, <-- [BC Duration, corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
+					// Link the last values and return them to maintain the above order. --signifies already linked
+					cWCC.LinkTo(cBCDur);
+					
+					// Link: Iterations, Real Alpha, Real Threshold, <-- WCC...
+					cSamplingStats.LinkToEnd(cWCC);
+					
+					// Link: ID <-- alpha(%),  parentAlpha, sample vert, sample edge <-- Iterations, real alpha, real threshold...
+					cID.LinkTo(new CSV_Builder(new CSV_Percent(alpha), 
+							new CSV_Builder(sample.getVertexCount(),
+							new CSV_Builder(sample.getEdgeCount(),
+									cSamplingStats))));
+					
+				} catch (Exception e) {
+					System.err.println("An error occured in sample: " + sampleName);
+					e.printStackTrace();
+					stopAllThreads();
 				}
-				
-				// Write out the respective job times
-				BufferedWriter jobOutput = Utils.FileSystem.createFile(sampleDir + pSummaryPostfix);
-				sampleTracker.writeJobTimes(jobOutput);
-				jobOutput.close();
-				
-				/** Return all the pertinent information by using the CSV Builders **/
-				// nodes, edges, WCC, BC Duration--[corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
-				// Link the last values and return them to maintain the above order. --signifies already linked
-				cWCC.LinkTo(cBCDur);
-				return new CSV_Builder(sample.getVertexCount(),
-						new CSV_Builder(sample.getEdgeCount(),
-								cWCC));
-								
-			} catch (Exception e) {
-				System.err.println("An error occured in sample: " + sampleName);
-				e.printStackTrace();
-				stopAllThreads();
 			}
-			
-			return null;
+			return cID;
 		}
 	}
 	
@@ -315,65 +338,64 @@ public class BCRunnerSimple {
 		Utils.FileSystem.createFolder(sampleOverallDir);
 			
 		
-		// Input: alpha(%), alpha(#), threshold, maxSample(%), maxSample(#)
-		// Output: nodes, edges, WCC, BC Duration--[corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
+		// Input: threshold, maxSample(%), maxSample(#)
+		// Output: alpha (%), sample nodes, sample edges, WCC, BC Duration--[corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
 		LinkedList<CSV_Builder> results = new LinkedList<CSV_Builder>();
-		
+				
 		// Begin the sampling!
 		for (double threshold = 0; threshold <= 1.0; threshold += 0.2) {
 			String tFolder = sampleOverallDir + "/" + "thresh" + HardCode.dcf.format(threshold*10000);
 			Utils.FileSystem.createFolder(tFolder);
 			// A total of log2(1/0.0035) iterations
-			for (double alpha = 0.0035; alpha < 1.0; alpha = alpha * 2) {
-				String aFolder = tFolder + "/" + "alpha" + HardCode.dcf.format(alpha * 10000);
-				Utils.FileSystem.createFolder(aFolder);
-				// Now set the max sample
-				for (double maxSample = 0.2; maxSample <= 1.4; maxSample += 0.4) {
-					// Easy way of doing a different version of max
-					int maxEdgeAdd = (maxSample == 1.4) ? Integer.MAX_VALUE : Math.max((int)Math.ceil(maxSample/alpha) - 1, 1);
-					String mFolder = aFolder + "/max" + HardCode.dcf.format(maxSample * 10000);
-					Utils.FileSystem.createFolder(mFolder);
+			for (double maxSample = 0.0075; maxSample <= 1.0; maxSample *= 2) {
+				// Easy way of doing a different version of max
+				int maxEdgeAdd = (int)(Math.max((int)Math.ceil((double)graph.getVertexCount() * maxSample), 1));
+				String mFolder = tFolder + "/max" + HardCode.dcf.format(maxSample * 10000);
+				Utils.FileSystem.createFolder(mFolder);
+				
+				// Create an array to hold the different threads
+				ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+				
+				// Finally run the analysis
+				for (int replica = 0; replica < 3; replica++) {
+					// Uniquely name this version and create its folder
+					String sampleName = "sample" + replica;
+					String sampleDir = mFolder + "/" + sampleName;
+					Utils.FileSystem.createFolder(sampleDir);
 					
-					// Finally run the analysis
-					ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+					// Create the shell of the sample
+					RDBFSSample rndSample = new RDBFSSample(0.00, threshold, maxEdgeAdd);
 					
-					for (int replica = 0; replica < 3; replica++) {
-						// Uniquely name this version and create its folder
-						String sampleName = "sample" + replica;
-						String sampleDir = mFolder + "/" + sampleName;
-						Utils.FileSystem.createFolder(sampleDir);
-						
-						// Select the sampling method
-						RDBFSSample rndSample = new RDBFSSample(alpha, threshold, maxEdgeAdd);
-						// Run the sample threads
-						tasks.add(new SampleThreadRunner(sampleDir, sampleName, rndSample, graph));
-					}
-					
-					// Add the results onto the last to be added CSV_Builder
-					CSV_Builder maxEdge = new CSV_Builder(maxEdgeAdd);
-					// CSV_Builder: nodes, edges, WCC, BC Duration--[corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
-					for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-						maxEdge.LinkTo(retVal.get());
-					}
-					// alpha(%), alpha(#), threshold, maxSample(%), maxSample(#)
-					CSV_Builder input = new CSV_Builder(new CSV_Percent(alpha), //alpha(%)
-								new CSV_Builder((int)Math.ceil(alpha * graph.getEdgeCount()), //alpha(#)
-										new CSV_Builder(new CSV_Percent(threshold), //threshold
-												new CSV_Builder(new CSV_Percent(maxSample), //maxSample(%)
-														maxEdge //maxSample(#) --> sample output data
-												))));
-					
-					results.add(input);
-					tasks.clear();
+					// Run the sample threads
+					// ID, alpha (%),  sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+					tasks.add(new SampleThreadRunner(sampleDir, sampleName, rndSample, graph, replica));
 				}
+
+				// Add the results onto the last to be added CSV_Builder
+				CSV_Builder cMaxEdge = new CSV_Builder(maxEdgeAdd);
+
+				// maxEdge(#) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+					cMaxEdge.LinkTo(retVal.get());
+				}
+				
+				// cMaxEdge = maxSample(#), replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+				// input = threshold, maxSample(%), cMaxEdge
+				CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold), //threshold
+											new CSV_Builder(new CSV_Percent(maxSample), //maxSample (%)
+													cMaxEdge //maxSample (#) --> sample output data
+											));
+				
+				results.add(input);
+				tasks.clear();
 			}
 		}
 		
 		// Add the sample type and link that to all the inputs
 		CSV_Builder sampleType = new CSV_Builder("RDBFSSample");
 		
-		// Input: alpha(%), alpha(#), threshold, maxSample(%), maxSample(#)
-		// Output: nodes, edges, WCC, BC Duration--[corrSize(#), corrSize(%), Spearmans, Pearsons, Error]		
+		// Results array: threshold, maxSample(%), maxSample(#), replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+		// Link: sampleType, threshold...
 		for (CSV_Builder builder : results) {
 			sampleType.LinkTo(builder);
 		}
@@ -387,13 +409,16 @@ public class BCRunnerSimple {
 		csvOutput.write("\"Parent Node Count\","
 				+ "\"Parent Edge Count\","
 				+ "\"Sample Method Type\","
-				+ "\"Alpha (%)\","
-				+ "\"Alpha (#)\","
 				+ "\"Threshold\","
 				+ "\"Maximum Sample (%)\","
 				+ "\"Maximum Sample (#)\","
+				+ "\"Replica ID\","
+				+ "\"Alpha (%)\","
 				+ "\"Sample Node Count\","
 				+ "\"Sample Edge Count\","
+				+ "\"Iterations\","
+				+ "\"Real Alpha\","
+				+ "\"Real Threshold\","
 				+ "\"Sample WCC Count\","
 				+ "\"Sample BC Duration\","
 				+ "\"Correlation Sample (#)\","

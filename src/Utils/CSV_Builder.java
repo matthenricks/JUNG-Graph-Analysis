@@ -30,6 +30,25 @@ public class CSV_Builder extends Object {
 		return this.next.add(next);
 	}
 	
+	/**
+	 * Links the CSV_Builder to the end of the current one. Will make a permutation of all values on end
+	 * @param next
+	 * @return
+	 */
+	public boolean LinkToEnd(CSV_Builder next) {
+		if (this.next.isEmpty()) {
+			return this.next.add(next);
+		} else {
+			boolean isGood = true;
+			for (CSV_Builder after : this.next) {
+				if (!after.LinkToEnd(next)) {
+					isGood = false;
+				}
+			}
+			return isGood;
+		}
+	}
+	
 	public CSV_Builder(Object value) {
 		super();
 		this.value = value;

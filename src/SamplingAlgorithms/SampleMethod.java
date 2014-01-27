@@ -1,5 +1,6 @@
 package SamplingAlgorithms;
 
+import Utils.CSV_Builder;
 import edu.uci.ics.jung.graph.Graph;
 
 /**
@@ -9,5 +10,6 @@ import edu.uci.ics.jung.graph.Graph;
  */
 public interface SampleMethod {
 
-	public Graph<String, String> sampleGraph(Graph<String, String> parent);
+	public CSV_Builder sampleGraph(Graph<String, String> parent);
+	public Graph<String, String> getGraph();
 }
