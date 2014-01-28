@@ -42,47 +42,75 @@ public class RDBFSSample extends RandomBFSSample {
 		return new CSV_Builder(new Integer(iterations), parentCSV);
 	}
 	
+	
 	@Override
-	/***
-	 * Adds the node and it's immediate neighbors, but places a limit on the amount of neighbors
-	 */
 	protected boolean addNode(String current_vertex, Graph<String, String> parentGraph) {
-		// Add the selected node first
+		// Add the selected vertex
 		sampledGraph.addVertex(current_vertex);
 		addedCoreVertexes.add(current_vertex);
-		
+		addAllEdges(current_vertex, parentGraph);
+				
 		// Shuffle the neighbors so each has an even probability of being randomly selected
 		// This obtains all of the connecting edges to this node
 		ArrayList<String> currNeighbors = new ArrayList<String>(parentGraph.getNeighbors(current_vertex));
 		Collections.shuffle(currNeighbors, new Random(seed));
-		
-		// Add all the neighbors that are first degree
+		// Add all the neighbors that are first degree as potential next picks
 		availableNeighbors.addAll(currNeighbors);
-		// Add all the neighbors
+		// Add neighbors up to the max and their neighbors as possibilities
 		for(int counter = 0; counter < currNeighbors.size() && counter < maxDegree; counter++) {
 			String neighbor = currNeighbors.get(counter);
-			sampledGraph.addVertex(neighbor);
-			// Add all the edges between the current vertex and it's selected neighbor
-			Collection<String> edges = parentGraph.findEdgeSet(current_vertex, neighbor);
-			for (String edge : edges) {
-				if (!sampledGraph.containsEdge(edge)) {
-					Pair<String> endPoints = parentGraph.getEndpoints(edge);
-					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
-				}
+			if (!addedCoreVertexes.contains(neighbor)) {
+				sampledGraph.addVertex(neighbor);
+				addAllEdges(neighbor, parentGraph);
+				availableNeighbors.addAll(parentGraph.getNeighbors(neighbor));
 			}
-			edges.clear();
-			edges = parentGraph.findEdgeSet(neighbor, current_vertex);
-			for (String edge : edges) {
-				if (!sampledGraph.containsEdge(edge)) {
-					Pair<String> endPoints = parentGraph.getEndpoints(edge);
-					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
-				}
-			}
-			// Add all the potential neighbors as potential selections
-			availableNeighbors.addAll(parentGraph.getNeighbors(neighbor));
 		}
 		
-		iterations++;		
+		iterations++;
 		return true;
 	}
+	
+//	@Override
+//	/***
+//	 * Adds the node and it's immediate neighbors, but places a limit on the amount of neighbors
+//	 */
+//	protected boolean addNode(String current_vertex, Graph<String, String> parentGraph) {
+//		// Add the selected node first
+//		sampledGraph.addVertex(current_vertex);
+//		addedCoreVertexes.add(current_vertex);
+//		
+//		// Shuffle the neighbors so each has an even probability of being randomly selected
+//		// This obtains all of the connecting edges to this node
+//		ArrayList<String> currNeighbors = new ArrayList<String>(parentGraph.getNeighbors(current_vertex));
+//		Collections.shuffle(currNeighbors, new Random(seed));
+//		
+//		// Add all the neighbors that are first degree
+//		availableNeighbors.addAll(currNeighbors);
+//		// Add all the neighbors
+//		for(int counter = 0; counter < currNeighbors.size() && counter < maxDegree; counter++) {
+//			String neighbor = currNeighbors.get(counter);
+//			sampledGraph.addVertex(neighbor);
+//			// Add all the edges between the current vertex and it's selected neighbor
+//			Collection<String> edges = parentGraph.findEdgeSet(current_vertex, neighbor);
+//			for (String edge : edges) {
+//				if (!sampledGraph.containsEdge(edge)) {
+//					Pair<String> endPoints = parentGraph.getEndpoints(edge);
+//					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
+//				}
+//			}
+//			edges.clear();
+//			edges = parentGraph.findEdgeSet(neighbor, current_vertex);
+//			for (String edge : edges) {
+//				if (!sampledGraph.containsEdge(edge)) {
+//					Pair<String> endPoints = parentGraph.getEndpoints(edge);
+//					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
+//				}
+//			}
+//			// Add all the potential neighbors as potential selections
+//			availableNeighbors.addAll(parentGraph.getNeighbors(neighbor));
+//		}
+//		
+//		iterations++;		
+//		return true;
+//	}
 }

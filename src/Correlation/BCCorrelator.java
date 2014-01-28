@@ -77,7 +77,8 @@ public class BCCorrelator {
 		double[] retVal = {
 				Correlations.spearmansCorrelation(popValues, sample),
 				Correlations.pearsonsCorrelation(popValues, sample),
-				Correlations.errorCalculation(popValues, sample)
+				Correlations.errorCalculation(popValues, sample),
+				Correlations.kendallsCorrelation(popValues, sample)
 		};
 		
 		return retVal;

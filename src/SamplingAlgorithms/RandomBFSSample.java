@@ -14,7 +14,6 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseGraph;
 import edu.uci.ics.jung.graph.util.Pair;
 
-// TODO: Make this extend the RandomSampleNode
 public class RandomBFSSample implements SampleMethod {
 
 	// Alpha is the percentage of the overall graph's vertexes it will fulfill
@@ -113,40 +112,74 @@ public class RandomBFSSample implements SampleMethod {
 	}
 	
 	protected boolean addNode(String current_vertex, Graph<String, String> parentGraph) {
-		// Add the area around the selected node, itself and neighbors
-		sampledGraph.addVertex(current_vertex);		
-		// Shuffle the neighbors so each has an even probability of being randomly selected
-		// This obtains all of the connecting edges to this node
-		ArrayList<String> currNeighbors = new ArrayList<String>(parentGraph.getNeighbors(current_vertex));
-		Collections.shuffle(currNeighbors, new Random(seed));
-		// Add all the neighbors that are first degree
-		availableNeighbors.addAll(currNeighbors);
-		// Add all the neighbors
-		for(int counter = 0; counter < currNeighbors.size(); counter++) {
-			String neighbor = currNeighbors.get(counter);
-			sampledGraph.addVertex(neighbor);
-			// Add all the edges between the current vertex and it's selected neighbor
-			Collection<String> edges = parentGraph.findEdgeSet(current_vertex, neighbor);
-			for (String edge : edges) {
-				if (!sampledGraph.containsEdge(edge)) {
-					Pair<String> endPoints = parentGraph.getEndpoints(edge);
-					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
-				}
+		// Add the selected vertex
+		sampledGraph.addVertex(current_vertex);
+		addedCoreVertexes.add(current_vertex);
+		addAllEdges(current_vertex, parentGraph);
+		
+		// Add the vertexes neighbors and make their neighbors possibilities
+		for (String neighbor : parentGraph.getNeighbors(current_vertex)) {
+			if (!addedCoreVertexes.contains(neighbor)) {
+				sampledGraph.addVertex(neighbor);
+				availableNeighbors.add(neighbor);
+				addAllEdges(neighbor, parentGraph);
+				availableNeighbors.addAll(parentGraph.getNeighbors(neighbor));
 			}
-			edges.clear();
-			edges = parentGraph.findEdgeSet(neighbor, current_vertex);
-			for (String edge : edges) {
-				if (!sampledGraph.containsEdge(edge)) {
-					Pair<String> endPoints = parentGraph.getEndpoints(edge);
-					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
-				}
-			}
-			// Add all the potential neighbors as potential selections
-			availableNeighbors.addAll(parentGraph.getNeighbors(neighbor));
 		}
 		
 		return true;
 	}
+	
+	protected void addAllEdges(String current_vertex, Graph<String, String> parentGraph) {
+		Collection<String> allNodes = sampledGraph.getVertices();
+		for (String vert : allNodes) {
+			Collection<String> edges = parentGraph.findEdgeSet(vert, current_vertex);
+			edges.addAll(parentGraph.findEdgeSet(current_vertex, vert));
+			for (String edge : edges) {
+				if (!sampledGraph.containsEdge(edge)) {
+					Pair<String> endPoints = parentGraph.getEndpoints(edge);
+					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
+				}
+			}
+		}
+	}
+	
+	// Old method that doesn't pull all edges
+//	protected boolean addNode(String current_vertex, Graph<String, String> parentGraph) {
+//		// Add the area around the selected node, itself and neighbors
+//		sampledGraph.addVertex(current_vertex);		
+//		// Shuffle the neighbors so each has an even probability of being randomly selected
+//		// This obtains all of the connecting edges to this node
+//		ArrayList<String> currNeighbors = new ArrayList<String>(parentGraph.getNeighbors(current_vertex));
+//		Collections.shuffle(currNeighbors, new Random(seed));
+//		// Add all the neighbors that are first degree
+//		availableNeighbors.addAll(currNeighbors);
+//		// Add all the neighbors
+//		for(int counter = 0; counter < currNeighbors.size(); counter++) {
+//			String neighbor = currNeighbors.get(counter);
+//			sampledGraph.addVertex(neighbor);
+//			// Add all the edges between the current vertex and it's selected neighbor
+//			Collection<String> edges = parentGraph.findEdgeSet(current_vertex, neighbor);
+//			for (String edge : edges) {
+//				if (!sampledGraph.containsEdge(edge)) {
+//					Pair<String> endPoints = parentGraph.getEndpoints(edge);
+//					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
+//				}
+//			}
+//			edges.clear();
+//			edges = parentGraph.findEdgeSet(neighbor, current_vertex);
+//			for (String edge : edges) {
+//				if (!sampledGraph.containsEdge(edge)) {
+//					Pair<String> endPoints = parentGraph.getEndpoints(edge);
+//					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
+//				}
+//			}
+//			// Add all the potential neighbors as potential selections
+//			availableNeighbors.addAll(parentGraph.getNeighbors(neighbor));
+//		}
+//		
+//		return true;
+//	}
 	
 	protected String selectRandomNeighbor() {
 		// Randomize all the possible selections. This is potentially, grossly inefficient (depending on the remove)

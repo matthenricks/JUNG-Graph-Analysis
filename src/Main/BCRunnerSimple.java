@@ -189,7 +189,7 @@ public class BCRunnerSimple {
 		}
 
 		@Override
-		// ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+		// ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
 		public CSV_Builder call() throws Exception {
 			// Use the ID to consolidate everything together
 			CSV_Builder cID = new CSV_Builder(this.ID);
@@ -232,7 +232,7 @@ public class BCRunnerSimple {
 					// Generate the BC Builder to link
 					CSV_Builder cBCDur = new CSV_Builder(sampleTracker.getJobTime("BC Calculation of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000)));
 					
-					// sample nodes, sample edges, WCC, [BC Duration, corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
+					// sample nodes, sample edges, WCC, [BC Duration, corrSize(#), corrSize(%), Spearmans, Pearsons, Error, Kendalls]
 					for (double corrSize = 0.1; corrSize < 1.0; corrSize += 0.1) {
 						int compNumber = (int)Math.floor(parentGraph.getVertexCount() * corrSize);
 						if (compNumber < 1) compNumber = 1;
@@ -248,7 +248,8 @@ public class BCRunnerSimple {
 								new CSV_Builder(new CSV_Double(corrSize), // Added corrSize(%)
 									new CSV_Builder(new CSV_Double(result[0]), // Added spearmans
 										new CSV_Builder(new CSV_Double(result[1]), // Added pearsons
-												new CSV_Builder(new CSV_Double(result[2])))))); // Added error
+												new CSV_Builder(new CSV_Double(result[2]), // Added error
+														new CSV_Builder(new CSV_Double(result[3]))))))); // Added Kendall
 	
 						// Link the corrSize to the BCDuration
 						cBCDur.LinkTo(cCorrSize);
@@ -260,7 +261,7 @@ public class BCRunnerSimple {
 					jobOutput.close();
 					
 					/** Return all the pertinent information by using the CSV Builders **/
-					// sample nodes, sample edges, WCC, <-- [BC Duration, corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
+					// sample nodes, sample edges, WCC, <-- [BC Duration, corrSize(#), corrSize(%), Spearmans, Pearsons, Error, Kendalls]
 					// Link the last values and return them to maintain the above order. --signifies already linked
 					cWCC.LinkTo(cBCDur);
 					
@@ -339,7 +340,7 @@ public class BCRunnerSimple {
 			
 		
 		// Input: threshold, maxSample(%), maxSample(#)
-		// Output: alpha (%), sample nodes, sample edges, WCC, BC Duration--[corrSize(#), corrSize(%), Spearmans, Pearsons, Error]
+		// Output: alpha (%), sample nodes, sample edges, WCC, BC Duration--[corrSize(#), corrSize(%), Spearmans, Pearsons, Error, Kendalls]
 		LinkedList<CSV_Builder> results = new LinkedList<CSV_Builder>();
 				
 		// Begin the sampling!
@@ -367,19 +368,19 @@ public class BCRunnerSimple {
 					RDBFSSample rndSample = new RDBFSSample(0.00, threshold, maxEdgeAdd);
 					
 					// Run the sample threads
-					// ID, alpha (%),  sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+					// ID, alpha (%),  sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
 					tasks.add(new SampleThreadRunner(sampleDir, sampleName, rndSample, graph, replica));
 				}
 
 				// Add the results onto the last to be added CSV_Builder
 				CSV_Builder cMaxEdge = new CSV_Builder(maxEdgeAdd);
 
-				// maxEdge(#) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+				// maxEdge(#) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
 				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
 					cMaxEdge.LinkTo(retVal.get());
 				}
 				
-				// cMaxEdge = maxSample(#), replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+				// cMaxEdge = maxSample(#), replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
 				// input = threshold, maxSample(%), cMaxEdge
 				CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold), //threshold
 											new CSV_Builder(new CSV_Percent(maxSample), //maxSample (%)
@@ -394,7 +395,7 @@ public class BCRunnerSimple {
 		// Add the sample type and link that to all the inputs
 		CSV_Builder sampleType = new CSV_Builder("RDBFSSample");
 		
-		// Results array: threshold, maxSample(%), maxSample(#), replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error
+		// Results array: threshold, maxSample(%), maxSample(#), replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
 		// Link: sampleType, threshold...
 		for (CSV_Builder builder : results) {
 			sampleType.LinkTo(builder);
@@ -425,7 +426,8 @@ public class BCRunnerSimple {
 				+ "\"Correlation Sample (%)\","
 				+ "\"Spearmans Correlation\","
 				+ "\"Pearsons Correlation\","
-				+ "Average Error");
+				+ "\"Average Error\","
+				+ "Kendalls Distance");
 		csvOutput.newLine();
 		mainData.writeCSV(csvOutput);
 		csvOutput.close();
