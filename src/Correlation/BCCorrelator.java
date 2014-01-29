@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -74,11 +76,37 @@ public class BCCorrelator {
 			sample[counter] = sampleValues.get(counter).getValue();
 		}
 		
+		
+		/*** Added Accuracy Metric ***/
+		// Prepare the data
+		List<Entry<String, Double>> popByDouble = new ArrayList<Entry<String, Double>>(popBC.entrySet());
+		Collections.sort(popByDouble, new Comparator<Entry<String, Double>>() {
+			@Override
+			public int compare(Entry<String, Double> arg0,
+					Entry<String, Double> arg1) {
+				return arg1.getValue().compareTo(arg0.getValue());
+			}
+		});
+
+		// Prepare a hash for added speed
+		HashSet<String> sampleTopHash = new HashSet<String>(nodeNum);
+		for (Entry<String, Double> entry : sampleValues.subList(0, nodeNum))
+			sampleTopHash.add(entry.getKey());
+		
+		// Actually calculate it, bubble contains...
+		int inSam = 0;
+		Iterator<Entry<String, Double>> popI = popByDouble.iterator();
+		for (int counter = 0; counter < nodeNum; counter++) {
+			if (sampleTopHash.contains(popI.next().getKey()))
+				inSam++;
+		}
+		
 		double[] retVal = {
 				Correlations.spearmansCorrelation(popValues, sample),
 				Correlations.pearsonsCorrelation(popValues, sample),
 				Correlations.errorCalculation(popValues, sample),
-				Correlations.kendallsCorrelation(popValues, sample)
+				Correlations.kendallsCorrelation(popValues, sample),
+				(double)inSam/(double)nodeNum
 		};
 		
 		return retVal;

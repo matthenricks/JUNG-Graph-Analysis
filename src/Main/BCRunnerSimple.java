@@ -249,7 +249,8 @@ public class BCRunnerSimple {
 									new CSV_Builder(new CSV_Double(result[0]), // Added spearmans
 										new CSV_Builder(new CSV_Double(result[1]), // Added pearsons
 												new CSV_Builder(new CSV_Double(result[2]), // Added error
-														new CSV_Builder(new CSV_Double(result[3]))))))); // Added Kendall
+														new CSV_Builder(new CSV_Double(result[3]), // Added Kendall
+																new CSV_Builder(new CSV_Percent(result[4])))))))); // Added Accuracy
 	
 						// Link the corrSize to the BCDuration
 						cBCDur.LinkTo(cCorrSize);
@@ -427,7 +428,8 @@ public class BCRunnerSimple {
 				+ "\"Spearmans Correlation\","
 				+ "\"Pearsons Correlation\","
 				+ "\"Average Error\","
-				+ "Kendalls Distance");
+				+ "\"Kendalls Distance\","
+				+ "Accuracy Metric");
 		csvOutput.newLine();
 		mainData.writeCSV(csvOutput);
 		csvOutput.close();

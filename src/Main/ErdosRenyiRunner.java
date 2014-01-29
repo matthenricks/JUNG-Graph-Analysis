@@ -29,9 +29,9 @@ public class ErdosRenyiRunner {
 		};
 		
 		// Send them through
-		for (int nodeNum = 1000; nodeNum <= 4000; nodeNum = nodeNum * 2) {
+		for (int nodeNum = 500; nodeNum <= 4000; nodeNum = nodeNum * 2) {
 			for (double probability = 0.015; probability <= 0.5; probability *= 2) {
-				input[1] = "Test/ERDOS-" + nodeNum + "-" + HardCode.dcf.format(probability * 100);
+				input[1] = "ERDOS-" + nodeNum + "-" + HardCode.dcf.format(probability * 10000);
 				input[8] = String.valueOf(probability);
 				input[7] = String.valueOf(nodeNum);
 				BCRunnerSimple.main(input);
