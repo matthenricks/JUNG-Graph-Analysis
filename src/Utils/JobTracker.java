@@ -30,6 +30,7 @@ public class JobTracker {
 		public abstract LinkedHashMap<String, Long> getTimes();
 	}
 
+
 	/**
 	 * Normal class for a timer using wall time
 	 * 	Note: this does not check to see if you're starting/ending twice
@@ -125,6 +126,22 @@ public class JobTracker {
 			throw new Error("Job " + jobName + "Doesn't exist. Cannot end tracking on inexistant job");
 		
 		timers.get(jobName).stop();
+	}
+	
+	/**
+	 * Gets the user time for the job if it exists
+	 * @param jobName
+	 * @return
+	 */
+	public Long getJobTime(String jobName) {
+		AbstractTimer timer = timers.get(jobName);
+		if (timer == null)
+			return null;
+		
+		if (timer.getTimes().containsKey("User(nano)") == false)
+			return -1000L;
+		else
+			return timer.getTimes().get("User(nano)");
 	}
 	
 	public void writeJobTimes(BufferedWriter bw) throws IOException {

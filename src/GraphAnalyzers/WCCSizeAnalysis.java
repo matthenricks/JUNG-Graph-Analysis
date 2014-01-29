@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Set;
 
+import Utils.CSV_Builder;
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
 import edu.uci.ics.jung.graph.Graph;
 
@@ -19,7 +20,7 @@ public class WCCSizeAnalysis {
 	 * @param summary
 	 * @throws IOException
 	 */
-	public static void analyzeBasicClusterInformation(Graph<String, String> sgraph, String path) throws IOException{
+	public static Integer analyzeBasicClusterInformation(Graph<String, String> sgraph, String path) throws IOException{
 
 		// Create the summary file
 		BufferedWriter summary = Utils.FileSystem.createFile(path);
@@ -36,5 +37,6 @@ public class WCCSizeAnalysis {
 		}
 		
 		summary.close();
+		return setx.size();
 	}
 }

@@ -23,6 +23,7 @@ public class HardCode {
 	// Formatting variables for how doubles will be displayed
 	public static DecimalFormat dcf3 = new DecimalFormat("0.00000");
 	public static DecimalFormat dcf = new DecimalFormat("00000");
+	public static DecimalFormat dcfP = new DecimalFormat("0.000%");
 	// Quick reference to a Pattern used to decompose CSV files
 	public static Pattern separateReg= Pattern.compile("\\,", Pattern.DOTALL);
 	

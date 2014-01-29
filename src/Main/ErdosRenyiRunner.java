@@ -13,28 +13,28 @@ import Utils.HardCode;
  */
 public class ErdosRenyiRunner {
 
-	public static void main(String[] args) throws InstantiationException, IllegalAccessException, IOException, ExecutionException, TimeoutException {
+	public static void main(String[] args) throws InstantiationException, IllegalAccessException, IOException, ExecutionException, TimeoutException, InterruptedException {
 		
 		// Create the basis for all the inputs
 		String[] input = {
 				"--output",
 				null, // output must go here
 				"--timeout",
-				"HOURS",
 				"24",
+				"HOURS",
 				"--load",
 				"erdosRenyi",
-				null, // probability
-				null // number of nodes
+				null, // number of nodes
+				null // probability
 		};
 		
 		// Send them through
-		for (int nodeNum = 500; nodeNum <= 1600; nodeNum = nodeNum * 2) {
-			for (double probability = 0.2; probability <= 0.8; probability += 0.2) {
-				input[1] = "Test/ERDOS-" + nodeNum + "-" + HardCode.dcf.format(probability * 100);
-				input[7] = String.valueOf(probability);
-				input[8] = String.valueOf(nodeNum);
-				BCRunner.main(input);
+		for (int nodeNum = 500; nodeNum <= 4000; nodeNum = nodeNum * 2) {
+			for (double probability = 0.015; probability <= 0.5; probability *= 2) {
+				input[1] = "ERDOS-" + nodeNum + "-" + HardCode.dcf.format(probability * 10000);
+				input[8] = String.valueOf(probability);
+				input[7] = String.valueOf(nodeNum);
+				BCRunnerSimple.main(input);
 			}
 		}
 	}
