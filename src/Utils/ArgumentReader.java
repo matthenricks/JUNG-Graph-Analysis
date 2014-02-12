@@ -17,14 +17,14 @@ public class ArgumentReader {
 	private static String sGraphLoaderHeader = "--load";
 	private static String sTimeUnitHeader = "--timeout";
 	private static String sCorrelationSampleHeader = "--corrSize";
-	private static String sPopBCPath = "--popBC";
+	private static String sPopPath = "--pop";
 	
 	public GraphLoader myGraphLoader;
 	public String myOutput;
 	public int myTimeOut;
 	public TimeUnit myTimeOutUnit;
 	public double myCorrelationPercent; // Percent of the population that bounds how much of the sample can be processed
-	public String myPopBCPath;
+	public String myPopPath;
 	
 	/***
 	 * Loads the default values for the arguments to be entered
@@ -35,7 +35,7 @@ public class ArgumentReader {
 		myTimeOut = 1;
 		myTimeOutUnit = TimeUnit.HOURS;
 		myCorrelationPercent = 1.0;
-		myPopBCPath = null;
+		myPopPath = null;
 	}
 
 	/**
@@ -58,8 +58,8 @@ public class ArgumentReader {
 	 *      <int of time> <timeunit>
 	 *    --corrSize
 	 *      <corrSize :: double>
-	 *    --popBC
-	 *      <path to CSV :: String>
+	 *    --sPopPath
+	 *      <path to a folder of all the analysis :: String>
 	 * @param args
 	 * @return the arguments read in
 	 * @throws IOException
@@ -70,8 +70,8 @@ public class ArgumentReader {
 		ArgumentReader loader = new ArgumentReader();
 		
 		for (int i = 0; i < args.length; i++) {
-			if (args[i].equalsIgnoreCase(sPopBCPath)) {
-				loader.myPopBCPath = args[++i];
+			if (args[i].equalsIgnoreCase(sPopPath)) {
+				loader.myPopPath = args[++i];
 			} else if (args[i].equalsIgnoreCase(sGraphLoaderHeader)) {
 				if (args[++i].equalsIgnoreCase("twitterImport")) {
 					try {

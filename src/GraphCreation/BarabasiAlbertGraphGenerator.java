@@ -34,10 +34,6 @@ public class BarabasiAlbertGraphGenerator implements GraphLoader, GeneratedGraph
 		}
 	};
 	
-
-	// Used to maintain the naming
-	private int vCount = 0, eCount = 0;
-	
 	// Factory's to help control the naming convention and creation of vertexes/edges
 	Factory<String> vertexFactory = new Factory<String>() {			
 		@Override
@@ -52,10 +48,11 @@ public class BarabasiAlbertGraphGenerator implements GraphLoader, GeneratedGraph
 		public String create() {
 			eCount++;
 			return "e" + Integer.toString(eCount);
-		}
-		
+		}		
 	};
-	
+
+	// Used to maintain the naming
+	private int vCount = 0, eCount = 0;
 	
 	Factory<Graph<String, String>> gFactory;
 	int iVerts, nEdges, tSteps;

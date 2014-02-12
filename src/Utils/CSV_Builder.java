@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 
 /**
  * A class that allows you to easily format different strung values into a CSV
@@ -30,6 +31,10 @@ public class CSV_Builder extends Object {
 		return this.next.add(next);
 	}
 	
+	public boolean LinkTo(List<CSV_Builder> next) {
+		return this.next.addAll(next);
+	}
+	
 	/**
 	 * Links the CSV_Builder to the end of the current one. Will make a permutation of all values on end
 	 * @param next
@@ -38,6 +43,20 @@ public class CSV_Builder extends Object {
 	public boolean LinkToEnd(CSV_Builder next) {
 		if (this.next.isEmpty()) {
 			return this.next.add(next);
+		} else {
+			boolean isGood = true;
+			for (CSV_Builder after : this.next) {
+				if (!after.LinkToEnd(next)) {
+					isGood = false;
+				}
+			}
+			return isGood;
+		}
+	}
+	
+	public boolean LinkToEnd(List<CSV_Builder> next) {
+		if (this.next.isEmpty()) {
+			return this.next.addAll(next);
 		} else {
 			boolean isGood = true;
 			for (CSV_Builder after : this.next) {

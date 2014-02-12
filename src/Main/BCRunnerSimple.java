@@ -195,6 +195,7 @@ public class BCRunnerSimple {
 			CSV_Builder cID = new CSV_Builder(this.ID);
 			
 			// Make this entire thing an alpha loop
+			// 9 values in this loop
 			for (double alpha = 0.0035; alpha < 1.0; alpha = alpha * 2) {
 				// Record it's own job stuff in here!
 				JobTracker sampleTracker = new JobTracker();
@@ -223,7 +224,7 @@ public class BCRunnerSimple {
 				
 				try {
 					// Output the graph in the down-time
-					BasicGraph.exportGraph(sample, aFolder + pSampleData);
+					// BasicGraph.exportGraph(sample, aFolder + pSampleData);
 					
 					/** Now begin the comparison **/ 
 					// Pull the population BC values
@@ -324,14 +325,14 @@ public class BCRunnerSimple {
 				
 		/*** BEGIN THE CONCURRENCY ***/		
 		// Either run a thread to load the BC, or import in a finished BC import
-		if (loader.myPopBCPath == null) {
+		if (loader.myPopPath == null) {
 			Callable<ConcurrentHashMap<String, Double>> popThread = new BCAnalyzer.CallableGraphBC(graph, loader.myOutput + pBcPostfix, mainTracker, "Main BC Calculation");
 			threadPool.execute(new PopulationThread(popThread, loader.myTimeOut, loader.myTimeOutUnit));
 
 			// Write out its basic information
 			writeBasicInformation(mainTracker, graph, loader.myOutput, "population");
 		} else {
-			setBCPop(BCAnalyzer.readGraphBCConcurr(loader.myPopBCPath));
+			setBCPop(BCAnalyzer.readGraphBCConcurr(loader.myPopPath + "/" + HardCode.pBcPostfix));
 		}
 		
 		/** Begin the sampling **/
