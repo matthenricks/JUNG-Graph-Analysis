@@ -17,7 +17,10 @@ public class HardCode {
 	public static String pMetricPostfix = "/metrics.txt";
 	public static String pWccPostfix = "/WCC.csv";
 	public static String pBcPostfix = "/bc.csv";
+	public static String pDegreePostfix = "/degree.csv";
+	public static String pEDPostfix = "/egocentric-density.csv";
 	public static String pSamplesFolder = "/samples/";
+	public static String pDistroFolder = "/distributions";
 	public static String pDataFix = "/data.dat";
 	
 	// Formatting variables for how doubles will be displayed

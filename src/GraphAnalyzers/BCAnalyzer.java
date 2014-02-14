@@ -5,7 +5,7 @@ import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,19 +14,42 @@ import Utils.JobTracker;
 import edu.uci.ics.jung.algorithms.importance.BetweennessCentrality;
 import edu.uci.ics.jung.graph.Graph;
 
-public class BCAnalyzer {
+public class BCAnalyzer implements AnalyzerDistribution {
 	
 	final static String myHeader = "\"userid\",\"bcScore\"";
 
-	/**
-	 * Reads in the BC file of the graph
-	 * @param path - the path to the data file
-	 * @return - a HashMap<String, Double> to compare against the other graph
-	 * @throws IOException
-	 */
-	public static HashMap<String, Double> readGraphBC(String path, Set<String> keyValues) throws IOException {
+	@Override
+	public Map<String, Double> analyzeGraph(Graph<String, String> graph,
+			String filepath) throws IOException {
+		// First create the writer
+		BufferedWriter bw = Utils.FileSystem.createFile(filepath);
+		bw.write(myHeader+"\n");
+		
+		// Run the centrality algorithm
+		BetweennessCentrality<String, String> cm = new BetweennessCentrality<String, String>(graph);
+		cm.setRemoveRankScoresOnFinalize(false); 
+		cm.evaluate();
+		
+		HashMap<String, Double> results = new HashMap<String, Double>();
+		
+		// Print out the results
+		double value;
+		for (String vertex : graph.getVertices()) {
+			value = cm.getVertexRankScore(vertex);
+			bw.write(vertex + "," + HardCode.dcf3.format(value) + "\n");
+			results.put(vertex, value);
+		}
+		
+		// Close to writer
+		bw.close();
+		
+		return results;
+	}
+	
+	@Override
+	public Map<String, Double> read(String filepath) throws IOException, Error {
 		// First create the reader
-		BufferedReader br = new BufferedReader(new FileReader(path));
+		BufferedReader br = new BufferedReader(new FileReader(filepath));
 		
 		String data;
 		if (!(data = br.readLine()).equals(myHeader)) {
@@ -43,14 +66,22 @@ public class BCAnalyzer {
 				br.close();
 				throw new Error("Data Split was incorrectly formatted: " + data);
 			}
-			if (keyValues.contains(items[0].trim()))
-				result.put(items[0].trim(), Double.valueOf(items[1].trim()));
+			
+			result.put(items[0].trim(), Double.valueOf(items[1].trim()));
 		}
 
 		br.close();
 		
 		return result;
 	}
+
+	@Override
+	public String getName() {
+		return "Betweenness Centrality";
+	}
+	
+	
+	/* OLD STUFF NEEDED TO MAINTAIN OLDER VERSIONS. NOTE THEY ARE DUPLICATIONS */
 	
 	/**
 	 * Reads in the population BC file of the graph
@@ -236,5 +267,5 @@ public class BCAnalyzer {
 			
 			return hashMap;
 		}
-	}
+	}	
 }
