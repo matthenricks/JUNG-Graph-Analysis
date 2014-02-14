@@ -122,9 +122,12 @@ public class Correlations {
         }
         tiedYPairs += consecutiveYTies * (consecutiveYTies - 1) / 2;
 
+        // Added Divisor Check
         int concordantMinusDiscordant = numPairs - tiedXPairs - tiedYPairs + tiedXYPairs - 2 * swaps;
-        return (double)concordantMinusDiscordant / FastMath.sqrt((numPairs - tiedXPairs) * (numPairs - tiedYPairs));		 
+        double divisor = Math.sqrt((numPairs - tiedXPairs) * (numPairs - tiedYPairs));
+        return (divisor != 0) ? (double)concordantMinusDiscordant / divisor : -999;		 
 	 }
+	
 	
 	/**
 	 * Takes in a population and sample BC array and computes the pearson correlation.
