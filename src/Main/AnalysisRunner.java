@@ -19,7 +19,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import Correlation.BCCorrelator;
 import Correlation.MeasureComparison;
 import GraphAnalyzers.AnalyzerDistribution;
 import GraphAnalyzers.BCAnalyzer;
@@ -31,7 +30,6 @@ import GraphCreation.GeneratedGraph;
 import SamplingAlgorithms.RDBFSSample;
 import Utils.ArgumentReader;
 import Utils.CSV_Builder;
-import Utils.CSV_Builder_Objects.CSV_Double;
 import Utils.CSV_Builder_Objects.CSV_Percent;
 import Utils.HardCode;
 import Utils.JobTracker;

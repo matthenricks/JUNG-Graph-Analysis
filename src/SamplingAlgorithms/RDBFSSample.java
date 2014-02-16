@@ -1,14 +1,11 @@
 package SamplingAlgorithms;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Random;
 
 import Utils.CSV_Builder;
 import edu.uci.ics.jung.graph.Graph;
-import edu.uci.ics.jung.graph.util.Pair;
 
 /***
  * This class is a sampling algorithm that samples a graph with a mixture of BFS and Random Node sampling in addition to a max degree taken bias

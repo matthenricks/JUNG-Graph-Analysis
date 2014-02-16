@@ -13,11 +13,6 @@ import java.util.List;
  */
 public class CSV_Builder extends Object {
 	
-	/**
-	 * Serial number for the class, unsure of the reason why
-	 */
-	private static final long serialVersionUID = 5872505568663027860L;
-
 	// The value of this spot in the chain of CSV_Builders
 	Object value;
 	LinkedList<CSV_Builder> next;

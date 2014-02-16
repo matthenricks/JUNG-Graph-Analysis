@@ -1,23 +1,18 @@
 package Correlation;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import Utils.CSV_Builder;
 import Utils.CSV_Builder_Objects;
 import Utils.CSV_Builder_Objects.CSV_Double;
-import Utils.CSV_Builder_Objects.CSV_Percent;
 
 public class MeasureComparison {
 
@@ -28,7 +23,6 @@ public class MeasureComparison {
 		}
 	};
 	
-	@SuppressWarnings("unchecked")
 	public static List<CSV_Builder> compare(ConcurrentHashMap<String, Double> population, HashMap<String, Double> sample) {
 		
 		// Sort the two hashmap entry sets and send them to be processed
