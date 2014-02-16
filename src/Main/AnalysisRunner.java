@@ -119,7 +119,7 @@ public class AnalysisRunner {
 			popWait.await();
 		}
 		popSetLock.unlock();
-		System.out.println("Population Values Pulled");		
+		System.out.println("Population Values Pulled");
 	}
 		
 	public static class SampleThreadRunner implements Callable<CSV_Builder> {
