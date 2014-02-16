@@ -336,8 +336,10 @@ public class AnalysisRunner {
 		// The CSV's from the sample section that will be combined with the Population information
 		LinkedList<CSV_Builder> results = new LinkedList<CSV_Builder>();
 
+		int replicaID = 0;
+		
 		// Begin the sampling!
-		double[] thresholdArea = {0, 1.0};
+		double[] thresholdArea = {0, 0.5, 1.0};
 		for (double threshold : thresholdArea) {
 			String tFolder = sampleOverallDir + "/" + "thresh" + HardCode.dcf.format(threshold*10000);
 			Utils.FileSystem.createFolder(tFolder);
@@ -355,7 +357,7 @@ public class AnalysisRunner {
 				// Finally run the analysis
 				for (int replica = 0; replica < 5; replica++) {
 					// Uniquely name this version and create its folder
-					String sampleName = "sample" + replica;
+					String sampleName = "sample" + replicaID;
 					String sampleDir = mFolder + "/" + sampleName;
 					Utils.FileSystem.createFolder(sampleDir);
 					
@@ -364,7 +366,7 @@ public class AnalysisRunner {
 					
 					// Run the sample threads
 					// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
-					tasks.add(new SampleThreadRunner(sampleDir, sampleName, rndSample, graph, replica));
+					tasks.add(new SampleThreadRunner(sampleDir, sampleName, rndSample, graph, replicaID++));
 				}
 
 				// Add the results onto the last to be added CSV_Builder

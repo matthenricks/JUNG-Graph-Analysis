@@ -17,15 +17,12 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.jfree.data.io.CSV;
-
 import Correlation.BCCorrelator;
 import GraphAnalyzers.BCAnalyzer;
 import GraphAnalyzers.WCCSizeAnalysis;
 import GraphCreation.BasicGraph;
 import GraphCreation.GeneratedGraph;
 import SamplingAlgorithms.RDBFSSample;
-import SamplingAlgorithms.SampleMethod;
 import Utils.ArgumentReader;
 import Utils.CSV_Builder;
 import Utils.CSV_Builder_Objects.CSV_Percent;
@@ -195,12 +192,7 @@ public class BCRunnerSimple {
 			CSV_Builder cID = new CSV_Builder(this.ID);
 			
 			// Make this entire thing an alpha loop
-<<<<<<< HEAD
 			for (double alpha = 0.01; alpha <= 1.0; alpha += 0.05) {
-=======
-			// 9 values in this loop
-			for (double alpha = 0.0035; alpha < 1.0; alpha = alpha * 2) {
->>>>>>> branch 'master' of https://github.com/matthenricks/JUNG-Graph-Analysis.git
 				// Record it's own job stuff in here!
 				JobTracker sampleTracker = new JobTracker();
 				
@@ -228,7 +220,7 @@ public class BCRunnerSimple {
 				
 				try {
 					// Output the graph in the down-time
-					// BasicGraph.exportGraph(sample, aFolder + pSampleData);
+					BasicGraph.exportGraph(sample, aFolder + pSampleData);
 					
 					/** Now begin the comparison **/ 
 					// Pull the population BC values

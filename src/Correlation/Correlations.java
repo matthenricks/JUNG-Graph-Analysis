@@ -137,6 +137,9 @@ public class Correlations {
 	 */
 	public static double pearsonsCorrelation(double[] series1, double[] series2) {
 		// Now process the values and generate the correlation
+		if (series1.length < 2 || series2.length < 2)
+			return Double.NaN;
+		
 		PearsonsCorrelation scr = new PearsonsCorrelation();
 		return scr.correlation(series1, series2);
 	}
@@ -149,6 +152,9 @@ public class Correlations {
 	 */
 	public static double spearmansCorrelation(double[] series1, double[] series2) {
 		// Now process the values and generate the correlation
+		if (series1.length < 2 || series2.length < 2)
+			return Double.NaN;
+		
 		SpearmansCorrelation scr = new SpearmansCorrelation();
 		return scr.correlation(series1, series2);
 	}
