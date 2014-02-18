@@ -337,7 +337,7 @@ public class AnalysisRunner {
 		LinkedList<CSV_Builder> results = new LinkedList<CSV_Builder>();
 
 		// Begin the sampling!
-		double[] thresholdArea = {0, 1.0};
+		double[] thresholdArea = {0, 0.05, 1.0};
 		for (double threshold : thresholdArea) {
 			String tFolder = sampleOverallDir + "/" + "thresh" + HardCode.dcf.format(threshold*10000);
 			Utils.FileSystem.createFolder(tFolder);
