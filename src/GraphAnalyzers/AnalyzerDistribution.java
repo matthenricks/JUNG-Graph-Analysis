@@ -1,5 +1,6 @@
 package GraphAnalyzers;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
@@ -13,13 +14,13 @@ import edu.uci.ics.jung.graph.Graph;
  * @author MOREPOWER
  *
  */
-public interface AnalyzerDistribution {
+public abstract class AnalyzerDistribution {
 
 	/**
 	 * Returns a vertex or edge-based distribution of double values it calculated and exports the analysis
 	 * @throws IOException 
 	 */
-	public Map<String, Double> analyzeGraph(Graph<String, String> graph, String filepath) throws IOException;
+	public abstract Map<String, Double> analyzeGraph(Graph<String, String> graph, String filepath) throws IOException;
 	
 	/**
 	 * Reads in the analysis of a previously exported version
@@ -27,11 +28,18 @@ public interface AnalyzerDistribution {
 	 * @throws Error 
 	 * @throws IOException 
 	 */
-	public Map<String, Double> read(String filepath) throws FileNotFoundException, IOException, Error;
+	public abstract Map<String, Double> read(String filepath) throws FileNotFoundException, IOException, Error;
+	
+	public Map<String, Double> computeOrProcess(Graph<String, String> graph, String filepath) throws FileNotFoundException, IOException, Error {
+		if ((new File(filepath)).exists() && (new File(filepath)).isFile())
+			return read(filepath);
+		else
+			return analyzeGraph(graph, filepath);
+	}
 	
 	/**
 	 * Returns identifying information for the method
 	 */
-	public String getName();
+	public abstract String getName();
 	
 }

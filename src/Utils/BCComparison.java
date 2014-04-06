@@ -22,7 +22,7 @@ public class BCComparison {
 		
 		String pathA = args[0];
 		String pathB = args[1];
-		BufferedWriter output = Utils.FileSystem.createFile(args[2]);
+		BufferedWriter output = Utils.FileSystem.createNewFile(args[2]);
 				
 		HashMap<String, Double> seriesA = BCAnalyzer.readGraphBC(pathA);
 		HashMap<String, Double> seriesB = BCAnalyzer.readGraphBC(pathB);

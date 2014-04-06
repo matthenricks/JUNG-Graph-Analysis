@@ -2,24 +2,24 @@ package Main;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import Correlation.BCCorrelator;
+import Correlation.KolmogorovSmirnovTest;
 import Correlation.MeasureComparison;
 import GraphAnalyzers.AnalyzerDistribution;
 import GraphAnalyzers.BCAnalyzer;
@@ -28,10 +28,10 @@ import GraphAnalyzers.EDAnalyzer;
 import GraphAnalyzers.WCCSizeAnalysis;
 import GraphCreation.BasicGraph;
 import GraphCreation.GeneratedGraph;
-import SamplingAlgorithms.RDBFSSample;
+import SamplingAlgorithms.RNDBFSSampler;
+import SamplingAlgorithms.TargetedSampleMethod;
 import Utils.ArgumentReader;
 import Utils.CSV_Builder;
-import Utils.CSV_Builder_Objects.CSV_Double;
 import Utils.CSV_Builder_Objects.CSV_Percent;
 import Utils.HardCode;
 import Utils.JobTracker;
@@ -44,6 +44,17 @@ import edu.uci.ics.jung.graph.Graph;
  *
  */
 public class AnalysisRunner {
+	
+	static final double[] thresholdArea = {0, 1.0};
+	static final int replicaLength = 3;
+	static final int[] maxSampleArea = {Integer.MAX_VALUE};
+				
+	// Make this entire thing an alpha loop
+	static final double[] alphaArea = {
+			0.01, 0.02, 0.03, 0.04, 
+			0.05, 0.1, 0.15, 
+			0.2, 0.3, 0.4, 0.6};
+	
 	
 	static volatile ExecutorService threadPool;
 	
@@ -71,13 +82,15 @@ public class AnalysisRunner {
 			System.out.println("The basic information for the graph: " + jobName + " exists");
 		}
 		
-		BufferedWriter bw = Utils.FileSystem.createFile(outputDir + HardCode.pMetricPostfix);
-		bw.write("The number of edges are: " + graph.getEdgeCount());
-		bw.newLine();
-		bw.write("The number of indices are: " + graph.getVertexCount());
-		bw.newLine();
-		bw.close();
-		tracker.endTracking("basic writing of " + jobName);
+		BufferedWriter bw = Utils.FileSystem.createFileIfNonexistant(outputDir + HardCode.pMetricPostfix);
+		if (bw != null) {
+			bw.write("The number of edges are: " + graph.getEdgeCount());
+			bw.newLine();
+			bw.write("The number of indices are: " + graph.getVertexCount());
+			bw.newLine();
+			bw.close();
+			tracker.endTracking("basic writing of " + jobName);
+		}
 		
 		// Get the WCC of this graph so that we better understand it's density
 		tracker.startTracking("WCC calculation of " + jobName);
@@ -111,6 +124,7 @@ public class AnalysisRunner {
 		popWait.signalAll();
 		popSetLock.unlock();
 	}
+	
 	public static void waitForPop() throws InterruptedException {
 		// Wait until the populationBC has been written to
 		popSetLock.lock();
@@ -126,7 +140,7 @@ public class AnalysisRunner {
 		
 		private String sampleDir, sampleName;
 		private Graph<String, String> parentGraph;
-		private RDBFSSample sampleMethod;
+		private TargetedSampleMethod sampleMethod;
 		private Integer ID;
 		
 		/**
@@ -137,7 +151,7 @@ public class AnalysisRunner {
 		 * @param parentGraph - the parent graph to be sampled
 		 * @param executorService - the executor (this isn't necessarily needed)
 		 */
-		public SampleThreadRunner(String sampleDir, String sampleName, RDBFSSample sampleMethod, 
+		public SampleThreadRunner(String sampleDir, String sampleName, TargetedSampleMethod sampleMethod, 
 				Graph<String, String> parentGraph, Integer ID) {			
 			this.sampleDir = sampleDir;
 			this.sampleName = sampleName;
@@ -148,15 +162,10 @@ public class AnalysisRunner {
 
 		@Override
 		// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+		// Added at the end: [KS, KS adj]
 		public CSV_Builder call() throws Exception {
 			// Use the ID to consolidate everything together
 			CSV_Builder cID = new CSV_Builder(this.ID);
-			
-			// Make this entire thing an alpha loop
-			double[] alphaArea = {
-					0.01, 0.02, 0.03, 0.04, 
-					0.05, 0.1, 0.15, 
-					0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
 			
 			for (double alpha : alphaArea) {
 				// Record it's own job stuff in here!
@@ -165,56 +174,104 @@ public class AnalysisRunner {
 				// Now set the max sample
 				sampleMethod.changeAlpha(alpha);
 
-				// First we need to actually generate the sample graph
-				sampleTracker.startTracking("Initial sampling of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
-				// Iterations, Real Alpha, Real Threshold
-				CSV_Builder cSamplingStats = sampleMethod.sampleGraph(parentGraph);
-				Graph<String, String> sample = sampleMethod.getGraph();
-				sampleTracker.endTracking("Initial sampling of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
-
 				// Create a folder segmenting by alpha
 				String aFolder = sampleDir + "/" + "alpha" + HardCode.dcf.format(alpha * 10000);
 				Utils.FileSystem.createFolder(aFolder);
 
-				// Output the graph
-				BasicGraph.exportGraph(sample, aFolder + HardCode.pDataFix);
+				// Only generate the graph if it needs generation
+				Graph<String, String> sample;
+				// All of the options should be the same Iterations, Real Alpha, Real Threshold
+				CSV_Builder cSamplingStats;
+				if ((new File(aFolder + HardCode.pDataFix)).isFile()) {
+					// Load the already finished graph
+					sample = (new BasicGraph(aFolder + HardCode.pDataFix)).loadGraph();
+					cSamplingStats = new CSV_Builder("Imported", 
+							new CSV_Builder("Imported")
+					);
+				} else {
+					// First we need to actually generate the sample graph
+					sampleTracker.startTracking("Initial sampling of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
+					cSamplingStats = sampleMethod.sampleGraph(parentGraph);
+					sample = sampleMethod.getGraph();
+					sampleTracker.endTracking("Initial sampling of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
+
+					// Output the graph since it hasn't been exported yet
+					BasicGraph.exportNewGraph(sample, aFolder + HardCode.pDataFix);
+				}
 				
 				/** Now begin the analysis **/
 				// Write out the  write out the basic information pertaining to the graph
-				CSV_Builder cWCC = BCRunnerSimple.writeBasicInformation(sampleTracker, sample, aFolder, sampleName);
+				CSV_Builder cWCC = writeBasicInformation(sampleTracker, sample, aFolder, sampleName);
 
 				// Wait for the population thread to finish
 				waitForPop();
 
+				// TODO: ANALYZERS HERE
 				Map<String, AnalyzerDistribution> analyzers = new HashMap<String, AnalyzerDistribution>();
 				analyzers.put(HardCode.pBcPostfix, (new BCAnalyzer()));
 				analyzers.put(HardCode.pDegreePostfix, (new DegreeAnalyzer()));
 				analyzers.put(HardCode.pEDPostfix, (new EDAnalyzer()));
+			
+				// A grouping for all of the sample outputs
+				HashMap<String, Double> bcVal = null;
+				HashMap<String, Double> edVal = null;
+				HashMap<String, Double> deVal = null;
 				
 				// Run all of the analyzers
 				for (Entry<String, AnalyzerDistribution> analyzer : analyzers.entrySet()) {
 					// Find and process the BC of the graph
 					sampleTracker.startTracking(analyzer.getValue().getName() + " of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
-					HashMap<String, Double> sampleValue = new HashMap<String, Double>(analyzer.getValue().analyzeGraph(sample, aFolder + analyzer.getKey()));
+					HashMap<String, Double> sampleValue = new HashMap<String, Double>(analyzer.getValue().computeOrProcess(sample, aFolder + analyzer.getKey()));
 					sampleTracker.endTracking(analyzer.getValue().getName() + " of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
-				
+
 					// Generate the CSV_Builder to link
 					CSV_Builder cDur = new CSV_Builder(sampleTracker.getJobTime(analyzer.getValue().getName() + " of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000)));
-					cDur.LinkTo(new CSV_Builder(analyzer.getValue().getName()));
+					cDur.LinkTo(new CSV_Builder(analyzer.getValue().getName()));					
 					
-					if (analyzer.getValue() instanceof BCAnalyzer)
+					if (analyzer.getValue() instanceof BCAnalyzer) {
+						bcVal = sampleValue;
+						
 						cDur.LinkToEnd(MeasureComparison.compare(populationBC, sampleValue));
-					else if (analyzer.getValue() instanceof DegreeAnalyzer)
-						cDur.LinkToEnd(MeasureComparison.compare(populationDegree, sampleValue));
-					else
-						cDur.LinkToEnd(MeasureComparison.compare(populationED, sampleValue));
+						double[] badValues = {0};
+						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationBC, sampleValue, badValues)); // [KS, KS adj]
+					} else if (analyzer.getValue() instanceof DegreeAnalyzer) {
+						deVal = sampleValue;
 
+						cDur.LinkToEnd(MeasureComparison.compare(populationDegree, sampleValue));
+						double[] badValues = {0, 1};
+						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationDegree, sampleValue, badValues)); // [KS, KS adj]
+					} else {
+						edVal = sampleValue;
+
+						cDur.LinkToEnd(MeasureComparison.compare(populationED, sampleValue));
+						double[] badValues = {0};
+						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationED, sampleValue, badValues)); // [KS, KS adj]
+					}
+					
 					// Connect the CSV to the duration
 					cWCC.LinkTo(cDur);
 				}
-
+				
+				// Now try to cross-correlate the samples (with correlation and P/R)
+				// Does the top 10% of a sample predict the top 10% of another sample?
+				ArrayList<Entry<String, Double>> bcList = new ArrayList<Entry<String, Double>>(bcVal.entrySet());
+				ArrayList<Entry<String, Double>> edList = new ArrayList<Entry<String, Double>>(edVal.entrySet());
+				ArrayList<Entry<String, Double>> deList = new ArrayList<Entry<String, Double>>(deVal.entrySet());
+				
+				Collections.sort(bcList, MeasureComparison.entrySort);
+				Collections.sort(edList, MeasureComparison.entrySort);
+				Collections.sort(deList, MeasureComparison.entrySort);
+				
+				double[] topPercentages = {0.1, 0.2, 0.5};
+				
+				// Returns: percent, precision, recall
+				List<CSV_Builder> crossCorrelations = new LinkedList<CSV_Builder>();
+				crossCorrelations.add(new CSV_Builder("BC-ED", MeasureComparison.PRCompare(bcList, edList, topPercentages)));
+				crossCorrelations.add(new CSV_Builder("BC-Degree", MeasureComparison.PRCompare(bcList, deList, topPercentages)));
+				crossCorrelations.add(new CSV_Builder("ED-Degree", MeasureComparison.PRCompare(edList, deList, topPercentages)));
+				
 				// Write out the respective job times
-				BufferedWriter jobOutput = Utils.FileSystem.createFile(aFolder + HardCode.pSummaryPostfix);
+				BufferedWriter jobOutput = new BufferedWriter(new FileWriter(Utils.FileSystem.findOpenPath(aFolder + HardCode.pSummaryPostfix)));
 				sampleTracker.writeJobTimes(jobOutput);
 				jobOutput.close();
 					
@@ -222,12 +279,15 @@ public class AnalysisRunner {
 				
 				// Link: Iterations, Real Alpha, Real Threshold, <-- WCC...
 				cSamplingStats.LinkToEnd(cWCC);
-					
-				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
-				cID.LinkTo(new CSV_Builder(new CSV_Percent(alpha), 
+				
+				// Link: ID <-- alpha(%), vert(#), edge(#) <-- corr type, cross alpha, Precision, Recall  <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+				CSV_Builder internals = (new CSV_Builder(new CSV_Percent(alpha), 
 						new CSV_Builder(sample.getVertexCount(),
-							new CSV_Builder(sample.getEdgeCount(),
-									cSamplingStats))));					
+							new CSV_Builder(sample.getEdgeCount()))));
+				internals.LinkToEnd(crossCorrelations);
+				internals.LinkToEnd(cSamplingStats);
+				
+				cID.LinkTo(internals);
 			}
 			return cID;
 		}
@@ -236,15 +296,10 @@ public class AnalysisRunner {
 	/**
 	 * This shall run the entire sequence. The argument input sequence isn't well designed yet  
 	 * @param args
+	 * @throws Exception 
 	 * @throws Error 
-	 * @throws IOException 
-	 * @throws IllegalAccessException 
-	 * @throws InstantiationException 
-	 * @throws ExecutionException 
-	 * @throws TimeoutException 
-	 * @throws InterruptedException 
 	 */
-	public static void main(String[] args) throws IOException, InstantiationException, IllegalAccessException, ExecutionException, TimeoutException, InterruptedException {
+	public static void main(String[] args) throws Exception {
 		
 		// Set up the thread executors
 		threadPool = Executors.newCachedThreadPool();
@@ -261,15 +316,20 @@ public class AnalysisRunner {
 		
 		// Import in the overall graph
 		StringBuilder summary = new StringBuilder();
-		Graph<String, String> graph = loader.myGraphLoader.loadGraph();
-		summary.append(loader.myGraphLoader.getInformation());
-		
-		// If the graph was generated, export that graph
+		Graph<String, String> graph;
 		if (loader.myGraphLoader instanceof GeneratedGraph) {
-			mainTracker.startTracking("Export Generated Graph");
-			BasicGraph.exportGraph(graph, loader.myOutput + HardCode.pDataFix);
-			mainTracker.endTracking("Export Generated Graph");
+			if ((new File(loader.myOutput + HardCode.pDataFix)).isFile() == false) {
+				graph = loader.myGraphLoader.loadGraph();
+				mainTracker.startTracking("Export Generated Graph");
+				BasicGraph.exportGraph(graph, loader.myOutput + HardCode.pDataFix);
+				mainTracker.endTracking("Export Generated Graph");
+			} else {
+				graph = (new BasicGraph(loader.myOutput + HardCode.pDataFix)).loadGraph();
+			}
+		} else {
+			graph = loader.myGraphLoader.loadGraph();
 		}
+		summary.append(loader.myGraphLoader.getInformation());
 
 		/*** BEGIN THE Analysis ***/
 		
@@ -324,7 +384,7 @@ public class AnalysisRunner {
 		// Generic Information - checks now to see if already existent
 		// TODO: Make this stored for later
 		writeBasicInformation(mainTracker, graph, loader.myOutput, "population");
-
+		
 		AnalysisRunner.setPop(popBC, popDegree, popED);
 
 		
@@ -337,42 +397,45 @@ public class AnalysisRunner {
 		LinkedList<CSV_Builder> results = new LinkedList<CSV_Builder>();
 
 		// Begin the sampling!
-		double[] thresholdArea = {0, 0.05, 1.0};
+		
 		for (double threshold : thresholdArea) {
-			String tFolder = sampleOverallDir + "/" + "thresh" + HardCode.dcf.format(threshold*10000);
+			String tFolder = sampleOverallDir + "thresh" + HardCode.dcf.format(threshold*10000);
 			Utils.FileSystem.createFolder(tFolder);
 			// A total of log2(1/0.0035) iterations
-			int[] maxSampleArea = {1, 10, graph.getVertexCount()-1};
-			for (int maxSampleAdd : maxSampleArea) {
+			// for (int maxSampleAdd : maxSampleArea) {
+			for (int maxSampleAdd = Integer.MAX_VALUE; maxSampleAdd == Integer.MAX_VALUE; maxSampleAdd--) {
 				// Calculate the percentage of the main graph this is
-				double maxSample = (double)(graph.getVertexCount()-1)/(double)maxSampleAdd;
-				String mFolder = tFolder + "/max" + HardCode.dcf.format(maxSample * 10000);
+				String mFolder = tFolder + "/max" + maxSampleAdd;
 				Utils.FileSystem.createFolder(mFolder);
 				
 				// Create an array to hold the different threads
 				ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
 				
 				// Finally run the analysis
-				for (int replica = 0; replica < 5; replica++) {
+				
+				for (int replica = 0; replica < replicaLength; replica++) {
 					// Uniquely name this version and create its folder
 					String sampleName = "sample" + replica;
 					String sampleDir = mFolder + "/" + sampleName;
 					Utils.FileSystem.createFolder(sampleDir);
 					
 					// Create the shell of the sample
-					RDBFSSample rndSample = new RDBFSSample(0.00, threshold, maxSampleAdd);
+					TargetedSampleMethod sampleMethod = new RNDBFSSampler(0.00, threshold, graph.getDefaultEdgeType());
 					
 					// Run the sample threads
 					// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
-					tasks.add(new SampleThreadRunner(sampleDir, sampleName, rndSample, graph, replica));
+					tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
 				}
 
 				// Add the results onto the last to be added CSV_Builder
 				CSV_Builder cMaxSample = new CSV_Builder(maxSampleAdd);
 
 				// maxEdge(#) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-					cMaxSample.LinkTo(retVal.get());
+//				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+//					cMaxSample.LinkTo(retVal.get());
+//				}
+				for (Callable<CSV_Builder> task : tasks) {
+					cMaxSample.LinkTo(task.call());
 				}
 				
 				// cMaxEdge = maxSample(#), // Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
@@ -387,7 +450,7 @@ public class AnalysisRunner {
 		}
 		
 		// Add the sample type and link that to all the inputs
-		CSV_Builder sampleType = new CSV_Builder("RDBFSSample");
+		CSV_Builder sampleType = new CSV_Builder("RNDBFS");
 		
 		// Results array: threshold, maxSample(#), // Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 		// Link: sampleType
@@ -404,7 +467,7 @@ public class AnalysisRunner {
 		// Link: sampleType
 
 		// Output the statistics on the correlations
-		BufferedWriter csvOutput = Utils.FileSystem.createFile(loader.myOutput + HardCode.pCorrPostfix);
+		BufferedWriter csvOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pCorrPostfix));
 		csvOutput.write("\"Parent Node Count\","
 				+ "\"Parent Edge Count\","
 				+ "\"Sample Method Type\","
@@ -414,7 +477,12 @@ public class AnalysisRunner {
 				+ "\"Alpha (%)\","
 				+ "\"Sample Node Count\","
 				+ "\"Sample Edge Count\","
-				+ "\"Iterations\","
+				// CC values
+				+ "\"Cross-Correlation Type\","
+				+ "\"Percentage Amount\","
+				+ "\"Precision\","
+				+ "\"Recall\","
+				// End CC
 				+ "\"Real Alpha\","
 				+ "\"Real BFS:RND\","
 				+ "\"Sample WCC Count\","
@@ -428,7 +496,8 @@ public class AnalysisRunner {
 				+ "\"Population P/R Alpha\","
 				+ "\"Sample P/R Alpha\","
 				+ "\"Precision\","
-				+ "Recall"
+				+ "\"Recall\","
+				+ "KS Statistic"				
 			);
 		csvOutput.newLine();
 		mainData.writeCSV(csvOutput);
@@ -438,7 +507,7 @@ public class AnalysisRunner {
 		mainTracker.endTracking("overall job");
 		
 		// Write out the respective job times
-		BufferedWriter jobOutput = Utils.FileSystem.createFile(loader.myOutput + HardCode.pSummaryPostfix);
+		BufferedWriter jobOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pSummaryPostfix));
 		mainTracker.writeJobTimes(jobOutput);
 		jobOutput.close();
 	}

@@ -39,5 +39,6 @@
 	<classpathentry kind="lib" path="Jars/lib-JFreeChart/orsonpdf-1.3-eval.jar"/>
 	<classpathentry kind="lib" path="Jars/lib-JFreeChart/servlet.jar"/>
 	<classpathentry kind="lib" path="Jars/lib-JFreeChart/swtgraphics2d.jar"/>
+	<classpathentry kind="lib" path="C:/Users/MOREPOWER/workspace/JUNG-SHARED/Jars/jsc.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

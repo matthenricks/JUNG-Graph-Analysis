@@ -17,19 +17,16 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.jfree.data.io.CSV;
-
 import Correlation.BCCorrelator;
 import GraphAnalyzers.BCAnalyzer;
 import GraphAnalyzers.WCCSizeAnalysis;
 import GraphCreation.BasicGraph;
 import GraphCreation.GeneratedGraph;
 import SamplingAlgorithms.RDBFSSample;
-import SamplingAlgorithms.SampleMethod;
 import Utils.ArgumentReader;
 import Utils.CSV_Builder;
-import Utils.CSV_Builder_Objects.CSV_Percent;
 import Utils.CSV_Builder_Objects.CSV_Double;
+import Utils.CSV_Builder_Objects.CSV_Percent;
 import Utils.HardCode;
 import Utils.JobTracker;
 import edu.uci.ics.jung.graph.Graph;
@@ -74,7 +71,7 @@ public class BCRunnerSimple {
 	}
 	
 	/**
-	 * Function to write out basic information
+	 * Function to write out basic information if it's not already there
 	 * @param tracker
 	 * @param graph
 	 * @param outputDir
@@ -86,17 +83,19 @@ public class BCRunnerSimple {
 		// Output some defining graph metrics
 		tracker.startTracking("basic writing of " + jobName);
 		
-		BufferedWriter bw = Utils.FileSystem.createFile(outputDir + pMetricPostfix);
-		bw.write("The number of edges are: " + graph.getEdgeCount());
-		bw.newLine();
-		bw.write("The number of indices are: " + graph.getVertexCount());
-		bw.newLine();
-		bw.close();
-		tracker.endTracking("basic writing of " + jobName);
+		BufferedWriter bw = Utils.FileSystem.createFileIfNonexistant(outputDir + pMetricPostfix);
+		if (bw != null) {
+			bw.write("The number of edges are: " + graph.getEdgeCount());
+			bw.newLine();
+			bw.write("The number of indices are: " + graph.getVertexCount());
+			bw.newLine();
+			bw.close();
+			tracker.endTracking("basic writing of " + jobName);
+		}
 		
 		// Get the WCC of this graph so that we better understand it's density
 		tracker.startTracking("WCC calculation of " + jobName);
-		Integer WCC = WCCSizeAnalysis.analyzeBasicClusterInformation(graph, outputDir + pWccPostfix);
+		Integer WCC = (int)Math.round((new WCCSizeAnalysis()).computeOrProcess(graph, outputDir + pWccPostfix).remove("Total WCC Clusters"));
 		tracker.endTracking("WCC calculation of " + jobName);
 		return new CSV_Builder(WCC);
 	}
@@ -258,7 +257,7 @@ public class BCRunnerSimple {
 					}
 					
 					// Write out the respective job times
-					BufferedWriter jobOutput = Utils.FileSystem.createFile(aFolder + pSummaryPostfix);
+					BufferedWriter jobOutput = Utils.FileSystem.createNewFile(aFolder + pSummaryPostfix);
 					sampleTracker.writeJobTimes(jobOutput);
 					jobOutput.close();
 					
@@ -408,7 +407,7 @@ public class BCRunnerSimple {
 						sampleType)); // sample method type
 		
 		// Output the statistics on the correlations
-		BufferedWriter csvOutput = Utils.FileSystem.createFile(loader.myOutput + pCorrPostfix);
+		BufferedWriter csvOutput = Utils.FileSystem.createNewFile(loader.myOutput + pCorrPostfix);
 		csvOutput.write("\"Parent Node Count\","
 				+ "\"Parent Edge Count\","
 				+ "\"Sample Method Type\","
@@ -439,7 +438,7 @@ public class BCRunnerSimple {
 		mainTracker.endTracking("overall job");
 		
 		// Write out the respective job times
-		BufferedWriter jobOutput = Utils.FileSystem.createFile(loader.myOutput + pSummaryPostfix);
+		BufferedWriter jobOutput = Utils.FileSystem.createNewFile(loader.myOutput + pSummaryPostfix);
 		mainTracker.writeJobTimes(jobOutput);
 		jobOutput.close();
 	}

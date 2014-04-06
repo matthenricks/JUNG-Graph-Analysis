@@ -9,7 +9,7 @@ import edu.uci.ics.jung.algorithms.generators.random.EppsteinPowerLawGenerator;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 
-public class EppsteinPowerLawGraphGenerator implements GraphLoader {
+public class EppsteinPowerLawGraphGenerator extends GraphLoader {
 
 	int vCount = 0, eCount = 0;
 	
@@ -19,24 +19,6 @@ public class EppsteinPowerLawGraphGenerator implements GraphLoader {
 			return new UndirectedSparseGraph<String, String>();
 		}
 	};	
-	// Factory's to help control the naming convention and creation of vertexes/edges
-	Factory<String> vertexFactory = new Factory<String>() {			
-		@Override
-		public String create() {
-			vCount++;
-			return "v" + Integer.toString(vCount); 
-		}
-		
-	}; 
-	Factory<String> edgeFactory = new Factory<String>() {
-		@Override
-		public String create() {
-			eCount++;
-			return "e" + Integer.toString(eCount);
-		}		
-	};
-	
-	
 	
 	// Must be UNDIRECTED
 	Graph<String, String> sampleGraph;

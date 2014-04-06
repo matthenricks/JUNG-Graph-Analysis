@@ -14,7 +14,7 @@ public class CSVErrorBuilder {
 	 * @throws IOException 
 	 */
 	public static void fixCSV(String csvPath, String csvOutput) throws IOException {
-		BufferedWriter writer = Utils.FileSystem.createFile(csvOutput);
+		BufferedWriter writer = Utils.FileSystem.createNewFile(csvOutput);
 		BufferedReader br = new BufferedReader(new FileReader(csvPath));
 		
 		// Re-output the first line

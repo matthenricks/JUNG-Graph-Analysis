@@ -12,7 +12,7 @@ import Utils.HardCode;
 import edu.uci.ics.jung.algorithms.scoring.DegreeScorer;
 import edu.uci.ics.jung.graph.Graph;
 
-public class DegreeAnalyzer implements AnalyzerDistribution {
+public class DegreeAnalyzer extends AnalyzerDistribution {
 	
 	public static String myHeader = "\"userid\",\"degree\"";
 	
@@ -20,7 +20,7 @@ public class DegreeAnalyzer implements AnalyzerDistribution {
 	public Map<String, Double> analyzeGraph(Graph<String, String> graph,
 			String filepath) throws IOException {
 		// First create the writer
-		BufferedWriter writer = Utils.FileSystem.createFile(filepath);
+		BufferedWriter writer = Utils.FileSystem.createNewFile(filepath);
 		writer.write(myHeader);
 		writer.newLine();
 		
@@ -92,7 +92,7 @@ public class DegreeAnalyzer implements AnalyzerDistribution {
 	public static HashMap<String, Double> analyzeGraphDegree(Graph<String, String> graph, String path) throws IOException {
 		
 		// First create the writer
-		BufferedWriter writer = Utils.FileSystem.createFile(path);
+		BufferedWriter writer = Utils.FileSystem.createNewFile(path);
 		writer.write(myHeader);
 		writer.newLine();
 		

@@ -14,15 +14,18 @@ import Utils.JobTracker;
 import edu.uci.ics.jung.algorithms.importance.BetweennessCentrality;
 import edu.uci.ics.jung.graph.Graph;
 
-public class BCAnalyzer implements AnalyzerDistribution {
+public class BCAnalyzer extends AnalyzerDistribution {
 	
 	final static String myHeader = "\"userid\",\"bcScore\"";
-
+	
+	// the amount of sig figs
+	final static int sigFigs = 7;
+	
 	@Override
 	public Map<String, Double> analyzeGraph(Graph<String, String> graph,
 			String filepath) throws IOException {
 		// First create the writer
-		BufferedWriter bw = Utils.FileSystem.createFile(filepath);
+		BufferedWriter bw = Utils.FileSystem.createNewFile(filepath);
 		bw.write(myHeader+"\n");
 		
 		// Run the centrality algorithm
@@ -35,7 +38,7 @@ public class BCAnalyzer implements AnalyzerDistribution {
 		// Print out the results
 		double value;
 		for (String vertex : graph.getVertices()) {
-			value = cm.getVertexRankScore(vertex);
+			value = Utils.HardCode.floorValue(cm.getVertexRankScore(vertex), sigFigs);
 			bw.write(vertex + "," + HardCode.dcf3.format(value) + "\n");
 			results.put(vertex, value);
 		}
@@ -160,7 +163,7 @@ public class BCAnalyzer implements AnalyzerDistribution {
 	public static HashMap<String, Double> analyzeGraphBC(Graph<String, String> graph, String path) throws IOException {
 		
 		// First create the writer
-		BufferedWriter bw = Utils.FileSystem.createFile(path);
+		BufferedWriter bw = Utils.FileSystem.createNewFile(path);
 		bw.write(myHeader+"\n");
 		
 		// Run the centrality algorithm
@@ -173,7 +176,7 @@ public class BCAnalyzer implements AnalyzerDistribution {
 		// Print out the results
 		double value;
 		for (String vertex : graph.getVertices()) {
-			value = cm.getVertexRankScore(vertex);
+			value = Utils.HardCode.floorValue(cm.getVertexRankScore(vertex), sigFigs);
 			bw.write(vertex + "," + HardCode.dcf3.format(value) + "\n");
 			results.put(vertex, value);
 		}
@@ -237,11 +240,12 @@ public class BCAnalyzer implements AnalyzerDistribution {
 		/**
 		 * BC Function that does maintain the values in a HashMap
 		 * Additionally, this tracks the time required for the BC and output
+		 * Lastly this also rounds the BC values to a certain amount of sig figs
 		 */
 		@Override
 		public ConcurrentHashMap<String, Double> call() throws Exception {
 			// First create the writer
-			BufferedWriter bw = Utils.FileSystem.createFile(myPath);
+			BufferedWriter bw = Utils.FileSystem.createNewFile(myPath);
 			bw.write(myHeader+"\n");
 			
 			// Run the centrality algorithm
@@ -256,7 +260,7 @@ public class BCAnalyzer implements AnalyzerDistribution {
 			jt.startTracking("Output of " + myName);
 			double value;
 			for (String vertex : myGraph.getVertices()) {
-				value = cm.getVertexRankScore(vertex);
+				value = HardCode.floorValue(cm.getVertexRankScore(vertex), sigFigs);
 				bw.write(vertex + "," + HardCode.dcf3.format(value) + "\n");
 				hashMap.put(vertex, value);
 			}

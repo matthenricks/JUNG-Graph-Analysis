@@ -11,10 +11,11 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 
 /**
  * Generates a random graph using the Erdos-Renyi binomial model (each pair of vertices is connected with probability p)
+ * This is not directed
  * @author MOREPOWER
  *
  */
-public class ErdosRenyiGraphGenerator implements GraphLoader, GeneratedGraph {
+public class ErdosRenyiGraphGenerator extends GraphLoader implements GeneratedGraph {
 
 	// Used to store the probability and number of nodes this will be created from
 	// expected number of edges = prob*C(n,2)
@@ -23,23 +24,6 @@ public class ErdosRenyiGraphGenerator implements GraphLoader, GeneratedGraph {
 	// TODO: @Shankar, why is this the way it is? Is there a better way to name?
 	protected int count = 0;
 
-	// Factory's to help control the naming convention and creation of vertexes/edges
-	Factory<String> vertexFactory = new Factory<String>() {			
-		@Override
-		public String create() {
-			count++;
-			return Integer.toString(count); 
-		}
-		
-	}; 
-	Factory<String> edgeFactory = new Factory<String>() {
-		@Override
-		public String create() {
-			count++;
-			return Integer.toString(count);
-		}
-		
-	};
 	Factory<UndirectedGraph<String, String>> gFactory = new Factory<UndirectedGraph<String,String>>() {			
 		@Override
 		public UndirectedGraph<String, String> create() {

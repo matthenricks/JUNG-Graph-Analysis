@@ -1,6 +1,7 @@
 package Utils;
 
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.concurrent.ThreadFactory;
 import java.util.regex.Pattern;
 
@@ -10,6 +11,55 @@ import java.util.regex.Pattern;
  *
  */
 public class HardCode {
+	
+	/**
+	 * Function that drops the numbers after a number of digits after the decimal
+	 * @param l1
+	 * @param decimalLength
+	 * @return
+	 */
+	public static double floorValue(double d, int decimalLength) {
+		return ((double) Math.floor(d * Math.pow(10, decimalLength))) / Math.pow(10, decimalLength);
+	}
+	
+	/**
+	 * Function that drops all the numbers after a number of digits after the decimal
+	 * @param l1
+	 * @param decimalLength
+	 * @return
+	 */
+	public static double[] floorAllValues(double[] l1, int decimalLength) {
+		for (int i = 0; i < l1.length; i++) {
+			l1[i] = ((double) Math.floor(l1[i] * Math.pow(10, decimalLength))) / Math.pow(10, decimalLength);
+		}
+		return l1;
+	}
+	/**
+	 * Function that drops all the numbers after a number of digits after the decimal
+	 * @param l1
+	 * @param decimalLength
+	 * @return
+	 */
+	public static List<Double> floorAllValues(List<Double> l1, int decimalLength) {
+		for (int i = 0; i < l1.size(); i++) {
+			l1.set(i, ((double) Math.floor(l1.get(i) * Math.pow(10, decimalLength))) / Math.pow(10, decimalLength));
+		}
+		return l1;
+	}
+	/**
+	 * Function that drops all the numbers after a number of digits after the decimal
+	 * @param l1
+	 * @param decimalLength
+	 * @return
+	 */
+	public static Double[] floorAllValues(Double[] l1, int decimalLength) {
+		for (int i = 0; i < l1.length; i++) {
+			l1[i] = ((double) Math.floor(l1[i] * Math.pow(10, decimalLength))) / Math.pow(10, decimalLength);		
+		}
+		return l1;
+	}
+
+	
 	
 	// Folder structural Strings for where information is being held/in what type of file
 	public static String pSummaryPostfix = "/summary.txt";

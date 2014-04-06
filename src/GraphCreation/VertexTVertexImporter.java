@@ -14,16 +14,15 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  * @author iosbomb
  *
  */
-public class VertexTVertexImporter implements GraphLoader {
+public class VertexTVertexImporter extends ImportedGraph {
 
 	final String myIgnore = "#";
 	
 	String mySplit = "\t";
-	String path;
 	EdgeType edgeType;
 	
 	public VertexTVertexImporter(String path, EdgeType edgeType, String split) {
-		this.path = path;
+		super(path);
 		this.edgeType = edgeType;
 		this.mySplit = split;
 	}
@@ -38,7 +37,7 @@ public class VertexTVertexImporter implements GraphLoader {
 	@Override
 	public Graph<String, String> loadGraph() throws Error, IOException {
 		Graph<String, String> graph = generateGraph();
-		BufferedReader br = new BufferedReader(new FileReader(path));
+		BufferedReader br = new BufferedReader(new FileReader(this.path));
 		String data;
 		while((data = br.readLine()) != null) {
 			if (!data.startsWith(myIgnore)) {

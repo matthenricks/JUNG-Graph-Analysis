@@ -12,15 +12,18 @@ import Utils.HardCode;
 import edu.uci.ics.jung.algorithms.metrics.Metrics;
 import edu.uci.ics.jung.graph.Graph;
 
-public class EDAnalyzer implements AnalyzerDistribution {
+public class EDAnalyzer extends AnalyzerDistribution {
 	
 	final static String myHeader = "\"userid\",\"edScore\"";
 
+	// the amount of sig figs the data will be kept to
+	final static int sigFigs = 7;
+	
 	@Override
 	public Map<String, Double> analyzeGraph(Graph<String, String> graph,
 			String filepath) throws IOException {
 		// First create the writer
-		BufferedWriter bw = Utils.FileSystem.createFile(filepath);
+		BufferedWriter bw = Utils.FileSystem.createNewFile(filepath);
 		bw.write(myHeader+"\n");
 		
 		// Run the centrality algorithm
@@ -29,7 +32,9 @@ public class EDAnalyzer implements AnalyzerDistribution {
 		
 		// Print out the results
 		for (Entry<String, Double> point : result.entrySet()) {
+			point.setValue(HardCode.floorValue(point.getValue(), sigFigs));
 			bw.write(point.getKey() + "," + HardCode.dcf3.format(point.getValue()) + "\n");
+			result.put(point.getKey(), point.getValue());
 		}
 		
 		// Close to writer

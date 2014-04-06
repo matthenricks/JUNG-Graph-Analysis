@@ -76,7 +76,7 @@ public class SampleGraph {
 					}
 					
 					String sampleOut = "Summary-" + HardCode.dcf.format(percentMaxLimit*100) + "P-" + HardCode.dcf.format(threshold*10000) + "-" + HardCode.dcf.format(alpha*10000);
-					BufferedWriter bw = Utils.FileSystem.createFile(loader.myOutput + "/" + sampleName + "/" + sampleOut);
+					BufferedWriter bw = Utils.FileSystem.createNewFile(loader.myOutput + "/" + sampleName + "/" + sampleOut);
 					bw.append("Average Node Size = " + NodeSize/5);
 					bw.newLine();
 					bw.append("Average Edge Size = " + EdgeSize/5);
@@ -88,7 +88,7 @@ public class SampleGraph {
 		}
 		mainTracker.endTracking("Overall Graph Sampling");
 		
-		BufferedWriter mySummary = Utils.FileSystem.createFile(loader.myOutput + HardCode.pSummaryPostfix);
+		BufferedWriter mySummary = Utils.FileSystem.createNewFile(loader.myOutput + HardCode.pSummaryPostfix);
 		mySummary.append(loader.myGraphLoader.getInformation());
 		mySummary.append("Actual graph statistics are as follows: ");
 		mySummary.newLine();

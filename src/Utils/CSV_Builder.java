@@ -103,6 +103,10 @@ public class CSV_Builder extends Object {
 		}
 	}
 	
+	public String toString() {
+		return getCSV();
+	}
+	
 	public String getCSV() {
 		if (next.isEmpty()) {
 			return value.toString() + "\n";
@@ -146,7 +150,7 @@ public class CSV_Builder extends Object {
 	 * @throws IOException
 	 */
 	public void writeCSV(String header, String path) throws IOException {
-		BufferedWriter bw = FileSystem.createFile(path);
+		BufferedWriter bw = FileSystem.createNewFile(path);
 		bw.write(header);
 		bw.newLine();
 		writeCSV(bw);

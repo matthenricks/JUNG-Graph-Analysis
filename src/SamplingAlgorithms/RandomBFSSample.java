@@ -138,7 +138,7 @@ public class RandomBFSSample implements SampleMethod {
 			for (String edge : edges) {
 				if (!sampledGraph.containsEdge(edge)) {
 					Pair<String> endPoints = parentGraph.getEndpoints(edge);
-					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond());
+					sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond(), parentGraph.getEdgeType(edge));
 				}
 			}
 		}

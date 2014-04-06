@@ -1,9 +1,5 @@
 package Main;
 
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
-
 import Utils.HardCode;
 
 /***
@@ -13,7 +9,7 @@ import Utils.HardCode;
  */
 public class ErdosRenyiRunner {
 
-	public static void main(String[] args) throws InstantiationException, IllegalAccessException, IOException, ExecutionException, TimeoutException, InterruptedException {
+	public static void main(String[] args) throws Exception {
 		
 		// Create the basis for all the inputs
 		String[] input = {
@@ -34,7 +30,7 @@ public class ErdosRenyiRunner {
 				input[1] = "ERDOS-" + nodeNum + "-" + HardCode.dcf.format(probability * 10000);
 				input[8] = String.valueOf(probability);
 				input[7] = String.valueOf(nodeNum);
-				BCRunnerSimple.main(input);
+				AnalysisRunner.main(input);
 			}
 		}
 	}

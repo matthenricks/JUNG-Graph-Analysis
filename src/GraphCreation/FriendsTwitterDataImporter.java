@@ -16,11 +16,10 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  * @author MOREPOWER
  *
  */
-public class FriendsTwitterDataImporter implements GraphLoader {
+public class FriendsTwitterDataImporter extends ImportedGraph {
 
 	final String myHeader = "\"user_id\",\"user_screen_name\",\"follower_id\",\"follower_screen_name\"";
 	
-	private String myPath;
 	private Graph<String, String> graph;
 	/**
 	 * Main constructor for the class
@@ -28,8 +27,8 @@ public class FriendsTwitterDataImporter implements GraphLoader {
 	 * @param graphType - The graph in which the data will be imported into
 	 */
 	public FriendsTwitterDataImporter(String path, Graph<String, String> graphType) {
+		super(path);
 		graph = graphType;
-		myPath = path;
 	}
 	
 	/**
@@ -38,6 +37,8 @@ public class FriendsTwitterDataImporter implements GraphLoader {
 	 * @param graphType - The graph in which the data will be imported into
 	 */
 	public FriendsTwitterDataImporter(String path, EdgeType graphType) {
+		super(path);
+		
 		if (graphType == EdgeType.DIRECTED) {
 			graph = new DirectedSparseGraph<String, String>();
 		} else if (graphType == EdgeType.UNDIRECTED) {
@@ -45,7 +46,6 @@ public class FriendsTwitterDataImporter implements GraphLoader {
 		} else {
 			throw new Error("Graph type: " + graphType.name() + " is not handled");
 		}
-		myPath = path;
 	}
 	
 	/**
@@ -53,7 +53,7 @@ public class FriendsTwitterDataImporter implements GraphLoader {
 	 */
 	@Override
 	public Graph<String, String> loadGraph() throws IOException, Error {
-		BufferedReader br = new BufferedReader(new FileReader(myPath));
+		BufferedReader br = new BufferedReader(new FileReader(this.path));
 		String header = br.readLine();
 		if (header.equals(myHeader) == false) {
 			br.close();
@@ -83,6 +83,6 @@ public class FriendsTwitterDataImporter implements GraphLoader {
 	
 	@Override
 	public String getInformation() {
-		return "Twitter Graph located at: " + myPath + "\n";
+		return "Twitter Graph located at: " + this.path + "\n";
 	}
 }

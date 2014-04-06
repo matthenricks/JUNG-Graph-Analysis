@@ -6,17 +6,15 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.DecimalFormat;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import Utils.CSV_Builder;
 import Utils.HardCode;
 import edu.uci.ics.jung.algorithms.cluster.WeakComponentClusterer;
 import edu.uci.ics.jung.graph.Graph;
 
-public class WCCSizeAnalysis implements AnalyzerDistribution {
+public class WCCSizeAnalysis extends AnalyzerDistribution {
 	
 	static DecimalFormat dcf = new DecimalFormat("0.000");
 	final static String myHeader = "\"cluster number\",\"size\"";
@@ -30,7 +28,7 @@ public class WCCSizeAnalysis implements AnalyzerDistribution {
 	public static Integer analyzeBasicClusterInformation(Graph<String, String> sgraph, String path) throws IOException{
 
 		// Create the summary file
-		BufferedWriter summary = Utils.FileSystem.createFile(path);
+		BufferedWriter summary = Utils.FileSystem.createNewFile(path);
 		
 		WeakComponentClusterer<String, String> clusters = new WeakComponentClusterer<String, String>();
 		Set<Set<String>> setx = clusters.transform(sgraph);
@@ -51,7 +49,7 @@ public class WCCSizeAnalysis implements AnalyzerDistribution {
 	public Map<String, Double> analyzeGraph(Graph<String, String> graph,
 			String filepath) throws IOException {
 		// Create the summary file
-		BufferedWriter summary = Utils.FileSystem.createFile(filepath);
+		BufferedWriter summary = Utils.FileSystem.createNewFile(filepath);
 		
 		WeakComponentClusterer<String, String> clusters = new WeakComponentClusterer<String, String>();
 		Set<Set<String>> setx = clusters.transform(graph);

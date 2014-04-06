@@ -29,14 +29,14 @@ public class FileSystem {
 	
 	/**
 	 * Makes sure an empty folder exists at the specified path. If not, it creates one.
-	 * This will error a file or partially filled folder exist
+	 * This will error if a file exists in the place
 	 * @param path
 	 * @return
 	 */
 	public static void createFolder(File path) {
 		if (path.exists()) {
 			if (path.isFile()) throw new Error("output_folder must be a folder, not a file");
-			if (path.list().length != 0) throw new Error("The output folder is not empty");
+//			if (path.list().length != 0) throw new Error("The output folder is not empty");
 		} else {
 			if (!path.mkdir())
 				throw new Error("Directory creation failed");
@@ -54,26 +54,53 @@ public class FileSystem {
 	}
 		
 	/**
-	 * Creates a file by returning a bufferedwriter used to write in it
+	 * Returns a writer that will overwrite the file
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static BufferedWriter createWriter(File path) throws IOException {
+		return new BufferedWriter(new FileWriter(path, false));
+	}
+	
+	// TODO: Change This Dude...
+	
+	/**
+	 * Creates a file by returning a BufferedWriter used to write in it
 	 * @param path
 	 * @return
 	 * @throws IOException 
 	 */
-	public static BufferedWriter createFile(File path) throws IOException {
-		
-		if (path.exists())
-			throw new Error("File: " + path.toString() + " already exists");
-		
-		return new BufferedWriter(new FileWriter(path));
+	public static File createFile(String path) throws IOException {
+		return path == null ? null : new File(path);
 	}
 	
 	/**
-	 * Creates a file by returning a bufferedwriter used to write in it
+	 * Creates a file if it hadn't existed before, otherwise it throws an error
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
+	public static BufferedWriter createNewFile(String path) throws IOException {
+		File file = new File(path);
+		if (file.exists())
+			throw new Error("File already exists: " + path);
+		return new BufferedWriter(new FileWriter(file));
+	}
+	
+	/**
+	 * Creates a file by returning a BufferedWriter used to write in it
 	 * @param path
 	 * @return
 	 * @throws IOException 
 	 */
-	public static BufferedWriter createFile(String path) throws IOException {
-		return createFile(new File(path));
+	public static BufferedWriter createFileIfNonexistant(String path) throws IOException {
+		File myFile = createFile(path);
+		if (myFile.exists()) {
+			if (myFile.isFile() == false)
+				throw new Error("File loaded is not a file");
+		}
+		
+		return createWriter(myFile);
 	}
 }

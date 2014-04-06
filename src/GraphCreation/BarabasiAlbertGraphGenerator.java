@@ -18,7 +18,7 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  * @author MOREPOWER
  *
  */
-public class BarabasiAlbertGraphGenerator implements GraphLoader, GeneratedGraph {
+public class BarabasiAlbertGraphGenerator extends GraphLoader implements GeneratedGraph {
 
 	static Factory<Graph<String, String>> FactoryDirected = new Factory<Graph<String,String>>() {
 		@Override
@@ -33,27 +33,7 @@ public class BarabasiAlbertGraphGenerator implements GraphLoader, GeneratedGraph
 			return new UndirectedSparseGraph<String, String>();
 		}
 	};
-	
-	// Factory's to help control the naming convention and creation of vertexes/edges
-	Factory<String> vertexFactory = new Factory<String>() {			
-		@Override
-		public String create() {
-			vCount++;
-			return "v" + Integer.toString(vCount); 
-		}
 		
-	}; 
-	Factory<String> edgeFactory = new Factory<String>() {
-		@Override
-		public String create() {
-			eCount++;
-			return "e" + Integer.toString(eCount);
-		}		
-	};
-
-	// Used to maintain the naming
-	private int vCount = 0, eCount = 0;
-	
 	Factory<Graph<String, String>> gFactory;
 	int iVerts, nEdges, tSteps;
 	
