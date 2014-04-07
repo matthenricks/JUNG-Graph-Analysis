@@ -194,8 +194,7 @@ public class BCRunnerSimple {
 			CSV_Builder cID = new CSV_Builder(this.ID);
 			
 			// Make this entire thing an alpha loop
-			// 9 values in this loop
-			for (double alpha = 0.0035; alpha < 1.0; alpha = alpha * 2) {
+			for (double alpha = 0.01; alpha <= 1.0; alpha += 0.05) {
 				// Record it's own job stuff in here!
 				JobTracker sampleTracker = new JobTracker();
 				
@@ -223,7 +222,7 @@ public class BCRunnerSimple {
 				
 				try {
 					// Output the graph in the down-time
-					// BasicGraph.exportGraph(sample, aFolder + pSampleData);
+					BasicGraph.exportGraph(sample, aFolder + pSampleData);
 					
 					/** Now begin the comparison **/ 
 					// Pull the population BC values
@@ -344,12 +343,20 @@ public class BCRunnerSimple {
 		// Output: alpha (%), sample nodes, sample edges, WCC, BC Duration--[corrSize(#), corrSize(%), Spearmans, Pearsons, Error, Kendalls]
 		LinkedList<CSV_Builder> results = new LinkedList<CSV_Builder>();
 				
+		
+		Integer sampleNumber = new Integer(1);
+		
 		// Begin the sampling!
-		for (double threshold = 0; threshold <= 1.0; threshold += 0.2) {
+		double[] thresholdValues = {0, 1};
+		for (double threshold : thresholdValues) {
+		// for (double threshold = 0; threshold <= 1.0; threshold += 0.2) {
 			String tFolder = sampleOverallDir + "/" + "thresh" + HardCode.dcf.format(threshold*10000);
 			Utils.FileSystem.createFolder(tFolder);
 			// A total of log2(1/0.0035) iterations
-			for (double maxSample = 0.0075; maxSample <= 1.0; maxSample *= 2) {
+			
+			double[] maxSampleValues = {0.0001, 0.005, 1.0};
+			for (double maxSample : maxSampleValues) {
+			// for (double maxSample = 0.0075; maxSample <= 1.0; maxSample *= 2) {
 				// Easy way of doing a different version of max
 				int maxEdgeAdd = (int)(Math.max((int)Math.ceil((double)graph.getVertexCount() * maxSample), 1));
 				String mFolder = tFolder + "/max" + HardCode.dcf.format(maxSample * 10000);
@@ -359,9 +366,9 @@ public class BCRunnerSimple {
 				ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
 				
 				// Finally run the analysis
-				for (int replica = 0; replica < 3; replica++) {
+				for (int replica = 0; replica < 5; replica++) {
 					// Uniquely name this version and create its folder
-					String sampleName = "sample" + replica;
+					String sampleName = "sample" + sampleNumber;
 					String sampleDir = mFolder + "/" + sampleName;
 					Utils.FileSystem.createFolder(sampleDir);
 					
@@ -370,7 +377,7 @@ public class BCRunnerSimple {
 					
 					// Run the sample threads
 					// ID, alpha (%),  sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-					tasks.add(new SampleThreadRunner(sampleDir, sampleName, rndSample, graph, replica));
+					tasks.add(new SampleThreadRunner(sampleDir, sampleName, rndSample, graph, sampleNumber++));
 				}
 
 				// Add the results onto the last to be added CSV_Builder
@@ -441,5 +448,7 @@ public class BCRunnerSimple {
 		BufferedWriter jobOutput = Utils.FileSystem.createNewFile(loader.myOutput + pSummaryPostfix);
 		mainTracker.writeJobTimes(jobOutput);
 		jobOutput.close();
+		
+		System.out.println("DONE");
 	}
 }

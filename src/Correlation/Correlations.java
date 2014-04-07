@@ -122,9 +122,12 @@ public class Correlations {
         }
         tiedYPairs += consecutiveYTies * (consecutiveYTies - 1) / 2;
 
+        // Added Divisor Check
         int concordantMinusDiscordant = numPairs - tiedXPairs - tiedYPairs + tiedXYPairs - 2 * swaps;
-        return (double)concordantMinusDiscordant / FastMath.sqrt((numPairs - tiedXPairs) * (numPairs - tiedYPairs));		 
+        double divisor = Math.sqrt((numPairs - tiedXPairs) * (numPairs - tiedYPairs));
+        return (divisor != 0) ? (double)concordantMinusDiscordant / divisor : -999;		 
 	 }
+	
 	
 	/**
 	 * Takes in a population and sample array and computes the pearson correlation.
@@ -134,6 +137,9 @@ public class Correlations {
 	 */
 	public static double pearsonsCorrelation(double[] series1, double[] series2) {
 		// Now process the values and generate the correlation
+		if (series1.length < 2 || series2.length < 2)
+			return Double.NaN;
+		
 		PearsonsCorrelation scr = new PearsonsCorrelation();
 		// TODO: Remove
 				if (series1.length < 2 || series2.length < 2)
@@ -149,6 +155,9 @@ public class Correlations {
 	 */
 	public static double spearmansCorrelation(double[] series1, double[] series2) {
 		// Now process the values and generate the correlation
+		if (series1.length < 2 || series2.length < 2)
+			return Double.NaN;
+		
 		SpearmansCorrelation scr = new SpearmansCorrelation();
 		// TODO: Remove
 		if (series1.length < 2 || series2.length < 2)

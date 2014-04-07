@@ -30,7 +30,7 @@ public class ArgumentReader {
 	 * Loads the default values for the arguments to be entered
 	 */
 	public ArgumentReader() {
-		myGraphLoader = new ErdosRenyiGraphGenerator(0.4, 500);
+		// myGraphLoader = new ErdosRenyiGraphGenerator(0.4, 500);
 		myOutput = Utils.FileSystem.findOpenPath("Test/DefaultOutput/").toString();
 		myTimeOut = 1;
 		myTimeOutUnit = TimeUnit.HOURS;
