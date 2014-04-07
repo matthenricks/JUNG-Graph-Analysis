@@ -9,6 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import javax.naming.ldap.Rdn;
+
 import org.junit.Test;
 
 import Correlation.KolmogorovSmirnovTest;
@@ -16,6 +18,7 @@ import GraphAnalyzers.BCAnalyzer;
 import GraphCreation.BarabasiAlbertGraphGenerator;
 import GraphCreation.GraphLoader;
 import SamplingAlgorithms.RDBFSSample;
+import SamplingAlgorithms.RNDBFSSampler;
 import Utils.FileSystem;
 import Utils.HardCode;
 import edu.uci.ics.jung.graph.Graph;
@@ -58,7 +61,7 @@ public class Calculations {
 //		HashMap<String, Double> a2 = GraphAnalyzers.BCAnalyzer.analyzeGraphBC(population, FileSystem.findOpenPath("bc").toString());		
 		assertTrue (a1.entrySet().containsAll(a2.entrySet()));
 		
-		RDBFSSample sampler = new RDBFSSample(1.0, 0, Integer.MAX_VALUE);
+		RNDBFSSampler sampler = new RNDBFSSampler(1.0, 0, population.getDefaultEdgeType());
 		sampler.sampleGraph(population);
 		Graph<String, String> sample = sampler.getGraph();
 		a2 = (new BCAnalyzer()).analyzeGraph(sample, FileSystem.findOpenPath("bc").toString());
