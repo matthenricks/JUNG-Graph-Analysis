@@ -11,9 +11,11 @@ public class KolmogorovSmirnovTest {
 
 	// TODO: Remove synchronized for the hell of it
 	public static double runSmirnov(double[] population, double[] sample) {
-		// TODO: Remove?
-		if (population.length < 2 || sample.length < 2)
-			return -1;
+		if (population.length < 2 || sample.length < 2) {
+			System.out.println("Pop/Sample is too small");
+			return Double.NaN;
+		}
+		
 		SmirnovTest smt = null;
 		try {
 			smt = new SmirnovTest(population, sample);
@@ -22,9 +24,15 @@ public class KolmogorovSmirnovTest {
 			if (e.getMessage().matches("^Invalid SP.+E\\-[0-9]+$")) {
 				e.printStackTrace();
 				return 0;
+			} else if (e.getMessage().matches("^Invalid SP -Infinity$")) {
+				e.printStackTrace();
+				return Double.NEGATIVE_INFINITY;
+			} else if (e.getMessage().matches("^Invalid SP Infinity$")) {
+				e.printStackTrace();
+				return Double.POSITIVE_INFINITY;
 			} else {
 				e.printStackTrace();
-				throw new Error("Illegal Argument");
+				return Double.NaN;
 			}
 		}
 		return smt.getTestStatistic();

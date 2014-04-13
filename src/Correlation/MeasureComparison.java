@@ -39,8 +39,8 @@ public class MeasureComparison {
 		List<CSV_Builder> cCorr = correlationCompare(population, sample, populationValues, sampleValues);
 		for (CSV_Builder csv : cCorr) {
 			// [KL]
-			if (!csv.LinkToEnd(KLCompare(population, sample, populationValues, sampleValues)))
-				throw new Error("KL Compare CSV Adding Failed");
+//			if (!csv.LinkToEnd(KLCompare(population, sample, populationValues, sampleValues)))
+//				throw new Error("KL Compare CSV Adding Failed");
 			// [popAlpha, sampleAlpha, Precision, Recall]
 			if (!csv.LinkToEnd(PRCompare(populationValues, sampleValues)))
 				throw new Error("PR Compare CSV Adding Failed");

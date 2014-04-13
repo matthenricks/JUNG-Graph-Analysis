@@ -51,9 +51,9 @@ public class AnalysisRunner {
 				
 	// Make this entire thing an alpha loop
 	static final double[] alphaArea = {
-			0.01, 0.02, 0.03, 0.04, 
+			0.01, 0.02, 0.03, 0.04, // 0.05 }; 
 			0.05, 0.1, 0.15, 
-			0.2, 0.3, 0.4, 0.6};
+			0.2, 0.3, 0.4, 0.6 , 0.8, 1.0};
 	
 	
 	static volatile ExecutorService threadPool;
@@ -492,7 +492,7 @@ public class AnalysisRunner {
 				+ "\"Spearmans\","
 				+ "\"Pearsons\","
 				+ "\"Error\","
-				+ "\"KL\","
+//				+ "\"KL\","
 				+ "\"Population P/R Alpha\","
 				+ "\"Sample P/R Alpha\","
 				+ "\"Precision\","
