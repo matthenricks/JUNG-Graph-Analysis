@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -433,7 +434,15 @@ public class AnalysisRunner {
 
 				// maxEdge(#) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
 				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-					cMaxSample.LinkTo(retVal.get());
+					try {
+						cMaxSample.LinkTo(retVal.get());
+					} catch (ExecutionException e) {
+						e.printStackTrace();
+						System.err.println("culprit is one of: " + mFolder);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						System.err.println("the iteration probably took too long: " + mFolder);						
+					}
 				}
 //				for (Callable<CSV_Builder> task : tasks) {
 //					cMaxSample.LinkTo(task.call());
