@@ -35,6 +35,10 @@ public class KolmogorovSmirnovTest {
 				return Double.NaN;
 			}
 		}
+		catch (java.lang.RuntimeException e) {
+			e.printStackTrace();
+			return Double.NaN;
+		}
 		return smt.getTestStatistic();
 	}
 	
@@ -103,6 +107,8 @@ public class KolmogorovSmirnovTest {
 		for (Entry<String, Double> val : sample.entrySet()) {
 			sam[counter++] = val.getValue();
 		}
+		
+		// TODO: Add in a sort that makes the values equal
 		
 		return runTest(pop, sam, badValues);
 	}

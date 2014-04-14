@@ -49,14 +49,14 @@ public class EDAnalyzer extends AnalyzerDistribution {
 		BufferedReader br = new BufferedReader(new FileReader(filepath));
 		
 		String data;
-		if (!(data = br.readLine()).equals(myHeader)) {
+		if ((data = br.readLine()) == null || data.equals(myHeader) == false) {
 			br.close();
 			throw new Error("EDAnalyzer Import Doesn't Match Header: " + myHeader);
 		}
 		
 		HashMap<String, Double> result = new HashMap<String, Double>();
 		while ((data = br.readLine()) != null) {
-			// Import in "userID, bcScore"
+			// Import in "userID, edScore"
 			data = data.replaceAll("\"", "");
 			String[] items = HardCode.separateReg.split(data);
 			if (items.length != 2) {

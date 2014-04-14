@@ -51,7 +51,7 @@ public class Calculations {
 	@Test
 	public void BCTest() throws IOException, Error {
 		Graph<String, String> population;
-		GraphLoader gL = new BarabasiAlbertGraphGenerator(300, 20, 200, EdgeType.UNDIRECTED);
+		GraphLoader gL = new BarabasiAlbertGraphGenerator(300, 20, 200, EdgeType.DIRECTED);
 		population = gL.loadGraph();
 
 		Map<String, Double> a1 = (new BCAnalyzer()).analyzeGraph(population, FileSystem.findOpenPath("bc").toString());

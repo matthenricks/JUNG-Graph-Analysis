@@ -55,9 +55,9 @@ public class BCAnalyzer extends AnalyzerDistribution {
 		BufferedReader br = new BufferedReader(new FileReader(filepath));
 		
 		String data;
-		if (!(data = br.readLine()).equals(myHeader)) {
+		if ((data = br.readLine()) == null || data.equals(myHeader) == false) {
 			br.close();
-			throw new Error("PopulationBC Import Doesn't Match Header: " + myHeader);
+			throw new Error("BCAnalyzer Import Doesn't Match Header: " + myHeader);
 		}
 		
 		HashMap<String, Double> result = new HashMap<String, Double>();

@@ -15,6 +15,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -431,12 +432,12 @@ public class AnalysisRunner {
 				CSV_Builder cMaxSample = new CSV_Builder(maxSampleAdd);
 
 				// maxEdge(#) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-//				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-//					cMaxSample.LinkTo(retVal.get());
-//				}
-				for (Callable<CSV_Builder> task : tasks) {
-					cMaxSample.LinkTo(task.call());
+				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+					cMaxSample.LinkTo(retVal.get());
 				}
+//				for (Callable<CSV_Builder> task : tasks) {
+//					cMaxSample.LinkTo(task.call());
+//				}
 				
 				// cMaxEdge = maxSample(#), // Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 				// input = threshold, maxSample(#), cMaxEdge
