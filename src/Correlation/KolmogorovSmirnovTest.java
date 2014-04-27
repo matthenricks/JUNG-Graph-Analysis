@@ -1,5 +1,6 @@
 package Correlation;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,6 +10,8 @@ import Utils.CSV_Builder;
 
 public class KolmogorovSmirnovTest {
 
+	final static double threshold = 0.000001;
+	
 	// TODO: Remove synchronized for the hell of it
 	public static double runSmirnov(double[] population, double[] sample) {
 		if (population.length < 2 || sample.length < 2) {
@@ -108,7 +111,24 @@ public class KolmogorovSmirnovTest {
 			sam[counter++] = val.getValue();
 		}
 		
-		// TODO: Add in a sort that makes the values equal
+		/** Sort the arrays and adjust the values that should be the same **/
+		Arrays.sort(pop);
+		Arrays.sort(sam);
+		
+		// Now look through them, adjusting necessary values
+		int p1 = 0, s2 = 0;
+		while (p1 < pop.length && s2 < sam.length) {
+			double diff = pop[p1] - sam[s2];
+			if (Math.abs(diff) < threshold) {
+				pop[p1] = sam[s2];
+				p1++;
+				s2++;
+			} else if (diff < 0) {
+				p1++;
+			} else {
+				s2++;
+			}
+		}
 		
 		return runTest(pop, sam, badValues);
 	}

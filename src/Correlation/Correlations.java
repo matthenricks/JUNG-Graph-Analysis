@@ -141,9 +141,7 @@ public class Correlations {
 			return Double.NaN;
 		
 		PearsonsCorrelation scr = new PearsonsCorrelation();
-		// TODO: Remove
-				if (series1.length < 2 || series2.length < 2)
-					return -1;
+		
 		return scr.correlation(series1, series2);
 	}
 		
@@ -159,9 +157,7 @@ public class Correlations {
 			return Double.NaN;
 		
 		SpearmansCorrelation scr = new SpearmansCorrelation();
-		// TODO: Remove
-		if (series1.length < 2 || series2.length < 2)
-			return -1;
+		
 		return scr.correlation(series1, series2);
 	}
 	

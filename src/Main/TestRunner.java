@@ -1,5 +1,8 @@
 package Main;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,6 +42,23 @@ public class TestRunner {
 	
 	public static void main(String[] args) throws InterruptedException, IOException, Error {
 
+//		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("export.csv")));
+//		bw.write(
+//				Double.POSITIVE_INFINITY + "," +
+//						Double.NEGATIVE_INFINITY + "," +
+//						Double.NaN + "\n"
+//				+
+//				(new Utils.CSV_Builder_Objects.CSV_Percent(Double.POSITIVE_INFINITY)).toString() + "," +
+//						(new Utils.CSV_Builder_Objects.CSV_Percent(Double.NEGATIVE_INFINITY)).toString() + "," +
+//						(new Utils.CSV_Builder_Objects.CSV_Percent(Double.NaN)).toString() + "\n"
+//				+
+//				(new Utils.CSV_Builder_Objects.CSV_Double(Double.POSITIVE_INFINITY)).toString() + "," +
+//						(new Utils.CSV_Builder_Objects.CSV_Double(Double.NEGATIVE_INFINITY)).toString() + "," +
+//						(new Utils.CSV_Builder_Objects.CSV_Double(Double.NaN)).toString()
+//				);
+//		bw.flush();
+//		bw.close();
+		
 		System.out.println(Runtime.getRuntime().availableProcessors());
 		System.out.println(Runtime.getRuntime().maxMemory() * 9.53674e-7);
 		

@@ -56,13 +56,7 @@ public class BCCorrelator {
 		
 		// First convert the set into a list so it can be ordered from greatest->smallest
 		List<Entry<String, Double>> sampleValues = new ArrayList<Entry<String, Double>>(sampleBC.entrySet());
-		Collections.sort(sampleValues, new Comparator<Entry<String, Double>>() {
-			@Override
-			public int compare(Entry<String, Double> arg0,
-					Entry<String, Double> arg1) {
-				return arg1.getValue().compareTo(arg0.getValue());
-			}
-		});
+		Collections.sort(sampleValues, MeasureComparison.entrySort);
 			
 		// Obtain the values of the population sample and the values of the two doubles
 		double[] popValues = new double[nodeNum];
@@ -80,13 +74,7 @@ public class BCCorrelator {
 		/*** Added Accuracy Metric ***/
 		// Prepare the data
 		List<Entry<String, Double>> popByDouble = new ArrayList<Entry<String, Double>>(popBC.entrySet());
-		Collections.sort(popByDouble, new Comparator<Entry<String, Double>>() {
-			@Override
-			public int compare(Entry<String, Double> arg0,
-					Entry<String, Double> arg1) {
-				return arg1.getValue().compareTo(arg0.getValue());
-			}
-		});
+		Collections.sort(popByDouble, MeasureComparison.entrySort);
 
 		// Prepare a hash for added speed
 		HashSet<String> sampleTopHash = new HashSet<String>(nodeNum);

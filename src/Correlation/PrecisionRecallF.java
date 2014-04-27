@@ -7,6 +7,8 @@ import Utils.CSV_Builder_Objects;
 
 public class PrecisionRecallF {
 	
+	// TODO: Could enhance efficiency by first sorting both arrays, then finding the intersection and dividing by each individually
+	
 	/**
 	 * Calculate the precision and recall
 	 * @param population

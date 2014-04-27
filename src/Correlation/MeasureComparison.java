@@ -21,7 +21,12 @@ public class MeasureComparison {
 	public static Comparator<Entry<String, Double>> entrySort = new Comparator<Entry<String,Double>>() {
 		@Override
 		public int compare(Entry<String, Double> arg0, Entry<String, Double> arg1) {
-			return arg1.getValue().compareTo(arg0.getValue());
+			int initComp = arg1.getValue().compareTo(arg0.getValue());
+			if (initComp == 0) {
+				return arg1.getKey().compareTo(arg0.getKey());
+			} else {
+				return initComp;
+			}
 		}
 	};
 	
@@ -107,6 +112,7 @@ public class MeasureComparison {
 		
 		List<CSV_Builder> csvs = new ArrayList<CSV_Builder>(lengths.length);
 		
+		// TODO: Make this more efficient, wastes space and previous work. Could maintain the old graphs since length could be in sorted order
 		for (double length : lengths) {
 			// Obtain the sample of the population
 			int popSize = (int)Math.ceil(populationSorted.size()*length);

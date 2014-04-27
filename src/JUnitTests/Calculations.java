@@ -49,7 +49,51 @@ public class Calculations {
 	}
 	
 	@Test
-	public void BCTest() throws IOException, Error {
+	public void BCTestUndirected() throws IOException, Error {
+		Graph<String, String> population;
+		GraphLoader gL = new BarabasiAlbertGraphGenerator(300, 20, 200, EdgeType.UNDIRECTED);
+		population = gL.loadGraph();
+
+		Map<String, Double> a1 = (new BCAnalyzer()).analyzeGraph(population, FileSystem.findOpenPath("bc").toString());
+		Map<String, Double> a2 = (new BCAnalyzer()).analyzeGraph(population, FileSystem.findOpenPath("bc").toString());
+
+//		HashMap<String, Double> a1 = GraphAnalyzers.BCAnalyzer.analyzeGraphBC(population, FileSystem.findOpenPath("bc").toString());
+//		HashMap<String, Double> a2 = GraphAnalyzers.BCAnalyzer.analyzeGraphBC(population, FileSystem.findOpenPath("bc").toString());		
+		assertTrue (a1.entrySet().containsAll(a2.entrySet()));
+		
+		RNDBFSSampler sampler = new RNDBFSSampler(1.0, 0, population.getDefaultEdgeType());
+		sampler.sampleGraph(population);
+		Graph<String, String> sample = sampler.getGraph();
+		a2 = (new BCAnalyzer()).analyzeGraph(sample, FileSystem.findOpenPath("bc").toString());
+
+		JUnitUtils.checkGraphs(sample, population);
+		List<Double> a1V = new ArrayList<Double>(a1.values());
+		List<Double> a2V = new ArrayList<Double>(a2.values());
+		Collections.sort(a1V);
+		Collections.sort(a2V);
+		List<Double> a3V = new ArrayList<Double>(a1V);
+		
+		// Check to see if the smirnov test is working
+		
+		double[] a1d = new double[a1V.size()];
+		double[] a2d = new double[a2V.size()];
+		for (int i = 0; i < a1d.length; i++) {
+			a1d[i] = a1V.get(i);
+			a2d[i] = a2V.get(i);
+		}
+		
+		System.out.println(KolmogorovSmirnovTest.runSmirnov(a1d, a2d));
+		
+		JUnitUtils.removeAllWithTolerance(a1V, a2V, 0);
+		JUnitUtils.removeAllWithTolerance(a2V, a3V, 0);
+		
+		assertTrue (a1V.isEmpty());
+		assertTrue (a2V.isEmpty());
+	}
+	
+	
+	@Test
+	public void BCTestDirected() throws IOException, Error {
 		Graph<String, String> population;
 		GraphLoader gL = new BarabasiAlbertGraphGenerator(300, 20, 200, EdgeType.DIRECTED);
 		population = gL.loadGraph();

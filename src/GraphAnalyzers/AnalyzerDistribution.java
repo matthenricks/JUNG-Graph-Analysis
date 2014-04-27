@@ -32,7 +32,13 @@ public abstract class AnalyzerDistribution {
 	
 	public Map<String, Double> computeOrProcess(Graph<String, String> graph, String filepath) throws FileNotFoundException, IOException, Error {
 		if ((new File(filepath)).exists() && (new File(filepath)).isFile())
-			return read(filepath);
+//			try {
+				return read(filepath);
+//			} catch (Exception e) {
+//				// Delete the file already there
+//				// TODO: File needs to be deleted
+//				return analyzeGraph(graph, filepath);
+//			}
 		else
 			return analyzeGraph(graph, filepath);
 	}
