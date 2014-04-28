@@ -144,7 +144,119 @@ public class Correlations {
 		
 		return scr.correlation(series1, series2);
 	}
+	
+	/**
+	 * Pearson's Correlation with a degenerate handling scheme
+	 * @param series1
+	 * @param series2
+	 * @return
+	 */
+	public static double pearsonsCustomCorrelation(double[] series1, double[] series2) {
+		if (series1.length != series2.length)
+			return Double.NaN;
 		
+		// Do each in 3 passes
+		double mean1 = 0, mean2 = 0;
+
+		// Calculate the means
+		for (int i = 0; i < series1.length; i++) {
+			mean1 += series1[i];
+			mean2 += series2[i];
+		}
+		mean1 /= series1.length;
+		mean2 /= series2.length;
+		
+		// Calculate the values
+		double nominator = 0;
+		double var1 = 0;
+		double var2 = 0;
+		for (int i = 0; i < series1.length; i++) {
+			double diff1 = series1[i] - mean1;
+			double diff2 = series2[i] - mean2;
+			nominator += diff1*diff2;
+			var1 += Math.pow(diff1, 2);
+			var2 += Math.pow(diff2, 2);
+		}
+
+		// Handle degenerate variable cases
+		// var1=var2=0, m1!=m2 -> 0, m1=m2 -> 1
+		// var1=0, var2>0, Undef
+		if (var1 == 0) {
+			if (mean1 != mean2)
+				return 0;
+			else if (var2 == 0) // Means are equal
+				return 1;
+			else
+				return Double.NaN;
+		} else if (var2 == 0) {
+			if (mean1 != mean2)
+				return 0;
+			else if (var1 == 0) // Means are equal
+				return 1;
+			else
+				return Double.NaN;
+		}
+
+		// Return the normal equation
+		return nominator / (Math.pow(var1, 0.5)*Math.pow(var2, 0.5));
+	}
+	
+	/**
+	 * Spearmans Rank Correlation with a degenerate case handling mechanism
+	 * @param series1
+	 * @param series2
+	 * @return
+	 */
+	public static double spearmansCustomCorrelation(double[] series1, double[] series2) {
+		if (series1.length != series2.length)
+			return Double.NaN;
+		
+		// Do each in 3 passes
+		double mean1 = 0, mean2 = 0;
+
+		// Calculate the means
+		for (int i = 0; i < series1.length; i++) {
+			mean1 += series1[i];
+			mean2 += series2[i];
+		}
+		mean1 /= series1.length;
+		mean2 /= series2.length;
+		
+		// Calculate the values
+		double nominator = 0;
+		double var1 = 0;
+		double var2 = 0;
+		for (int i = 0; i < series1.length; i++) {
+			double diff1 = series1[i] - mean1;
+			double diff2 = series2[i] - mean2;
+			nominator += diff1*diff2;
+			var1 += Math.pow(diff1, 2);
+			var2 += Math.pow(diff2, 2);
+		}
+		
+
+		// Handle degenerate variable cases
+		// var1=var2=0, m1!=m2 -> 0, m1=m2 -> 1
+		// var1=0, var2>0, Undef
+		if (var1 == 0) {
+			if (mean1 != mean2)
+				return 0;
+			else if (var2 == 0) // Means are equal
+				return 1;
+			else
+				return Double.NaN;
+		} else if (var2 == 0) {
+			if (mean1 != mean2)
+				return 0;
+			else if (var1 == 0) // Means are equal
+				return 1;
+			else
+				return Double.NaN;
+		}
+		
+		return nominator / Math.pow(var1*var2, 0.5);		
+	}
+	
 	/**
 	 * Takes in a population and sample array and computes the various correlations.
 	 * @param popBC - a list of all the pop in question

@@ -202,8 +202,8 @@ public class MeasureComparison {
 			}
 			// Add the results to a CSV
 			csvs.add(new CSV_Builder(new CSV_Builder_Objects.CSV_Percent(sliceSize),
-					new CSV_Builder(new CSV_Builder_Objects.CSV_Double(Correlations.spearmansCorrelation(popValues, sampleValues)),
-							new CSV_Builder(new CSV_Builder_Objects.CSV_Double(Correlations.pearsonsCorrelation(popValues, sampleValues)),
+					new CSV_Builder(new CSV_Builder_Objects.CSV_Double(Correlations.spearmansCustomCorrelation(popValues, sampleValues)),
+							new CSV_Builder(new CSV_Builder_Objects.CSV_Double(Correlations.pearsonsCustomCorrelation(popValues, sampleValues)),
 									new CSV_Builder(new CSV_Builder_Objects.CSV_Double(Correlations.errorCalculation(popValues, sampleValues))
 									)
 					)))
