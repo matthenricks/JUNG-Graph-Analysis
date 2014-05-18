@@ -1,15 +1,11 @@
 package Main;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import edu.uci.ics.jung.algorithms.scoring.DegreeScorer;
-import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 
 public class TestRunner {

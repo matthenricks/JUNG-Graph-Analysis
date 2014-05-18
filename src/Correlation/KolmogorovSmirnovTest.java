@@ -85,18 +85,18 @@ public class KolmogorovSmirnovTest {
 //				);
 	}
 	
-	private static int arrCount(double[] array, double[] values) {
-		int counter = 0;
-		for (double val : array) {
-			for (double check : values) {
-				if (check == val) {
-					counter++;
-					break;
-				}
-			}
-		}
-		return counter;
-	}
+//	private static int arrCount(double[] array, double[] values) {
+//		int counter = 0;
+//		for (double val : array) {
+//			for (double check : values) {
+//				if (check == val) {
+//					counter++;
+//					break;
+//				}
+//			}
+//		}
+//		return counter;
+//	}
 
 	public static CSV_Builder runTest(ConcurrentHashMap<String, Double> population, HashMap<String, Double> sample, double[] badValues) {
 		// Sort the two hashmap entry sets and send them to be processed
