@@ -35,7 +35,6 @@ public class RNDBFSSampler implements TargetedSampleMethod {
 		this.seed = seed; 
 		
 		// Variables needed for the tracking of the growing sample
-		// TODO: Change this to be either undirected or directed... Apparently, both can't exist
 		if (type.equals(EdgeType.DIRECTED)) {
 			sampledGraph = new DirectedSparseGraph<String, String>();	
 		} else if (type.equals(EdgeType.UNDIRECTED)) {
@@ -91,7 +90,7 @@ public class RNDBFSSampler implements TargetedSampleMethod {
 			if (addingQueue.isEmpty()) {
 				
 				// Select Random Sampling
-				if (rndGen.nextDouble() < bfs_rnd) {
+				if (rndGen.nextDouble() > bfs_rnd) {
 					// Random Sampling Setup
 					while (mainVGetter.hasNext() && (sampledGraph.getVertices().contains(current_vertex = mainVGetter.next())
 							|| addingQueue.contains(current_vertex)))
@@ -152,7 +151,7 @@ public class RNDBFSSampler implements TargetedSampleMethod {
 		
 		// Add all of the possible neighbors
 		for (String vertex : sampledGraph.getVertices()) {
-			addingQueue.addAll(parentGraph.getNeighbors(vertex));
+			addingQueue.addAll(parentGraph.getSuccessors(vertex));
 		}
 		// Remove all of the neighbors that are currently in the graph
 		addingQueue.removeAll(sampledGraph.getVertices());
@@ -171,7 +170,7 @@ public class RNDBFSSampler implements TargetedSampleMethod {
 		addingQueue.add(current_vertex);
 		
 		// Add the vertexes neighbors and make their neighbors neighbors new possibilities
-		for (String neighbor : parentGraph.getNeighbors(current_vertex)) {
+		for (String neighbor : parentGraph.getSuccessors(current_vertex)) {
 			if (!(sampledGraph.getVertices().contains(neighbor) || addingQueue.contains(neighbor))) {
 				addingQueue.add(neighbor);
 			}
@@ -199,7 +198,6 @@ public class RNDBFSSampler implements TargetedSampleMethod {
 		return true;
 	}
 	
-	// TODO: There seemed to be a bug, but now I'm unsure
 	protected void addAllEdges(String current_vertex, Graph<String, String> parentGraph) {
 		Collection<String> allNodes = sampledGraph.getVertices();
 		for (String vert : allNodes) {
@@ -211,7 +209,7 @@ public class RNDBFSSampler implements TargetedSampleMethod {
 					// Check to see if the undirected counterpart is already added
 					String revEdge = sampledGraph.findEdge(endPoints.getSecond(), endPoints.getFirst());
 					if (revEdge != null && EdgeType.UNDIRECTED == sampledGraph.getEdgeType(revEdge)) {
-						System.out.println("Duplicate edge muther fucker");
+						System.out.println("Duplicate edge...");
 					} else {
 						sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond(), parentGraph.getEdgeType(edge));
 					}

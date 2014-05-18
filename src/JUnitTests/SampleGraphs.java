@@ -15,6 +15,8 @@ import GraphAnalyzers.BCAnalyzer;
 import GraphCreation.BarabasiAlbertGraphGenerator;
 import GraphCreation.GraphLoader;
 import SamplingAlgorithms.RNDBFSSampler;
+import SamplingAlgorithms.RNDBFSSingleSampler;
+import SamplingAlgorithms.RNDWalkSampler;
 import Utils.FileSystem;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
@@ -22,6 +24,55 @@ import edu.uci.ics.jung.graph.util.EdgeType;
 
 public class SampleGraphs {
 
+	/**
+	 * Testing for the newer version of the old method
+	 */
+	@Test
+	public void TestNewSample() throws IOException, Error {
+		Graph<String, String> population;
+		GraphLoader gL = new BarabasiAlbertGraphGenerator(200, 10, 50, EdgeType.DIRECTED);
+		population = gL.loadGraph();
+		
+		RNDBFSSampler sampler = new RNDBFSSingleSampler(1.0, 0.4, EdgeType.DIRECTED);
+		System.out.println(sampler.sampleGraph(population).getCSV());
+		Graph<String, String> sample = sampler.getGraph();
+
+		JUnitUtils.checkGraphs(sample, population);
+		
+		gL = new BarabasiAlbertGraphGenerator(200, 10, 50, EdgeType.UNDIRECTED);
+		population = gL.loadGraph();
+		
+		sampler = new RNDBFSSingleSampler(1.0, 0.4, EdgeType.UNDIRECTED);
+		System.out.println(sampler.sampleGraph(population).getCSV());
+		sample = sampler.getGraph();
+
+		JUnitUtils.checkGraphs(sample, population);
+	}
+	
+	
+	@Test
+	public void TestRndWalkSample() throws IOException, Error {
+		Graph<String, String> population;
+		GraphLoader gL = new BarabasiAlbertGraphGenerator(200, 10, 50, EdgeType.DIRECTED);
+		population = gL.loadGraph();
+		
+		RNDWalkSampler sampler = new RNDWalkSampler(1.0, 1.0, EdgeType.DIRECTED);
+		System.out.println(sampler.sampleGraph(population).getCSV());
+		Graph<String, String> sample = sampler.getGraph();
+
+		JUnitUtils.checkGraphs(sample, population);
+		
+		gL = new BarabasiAlbertGraphGenerator(200, 10, 50, EdgeType.UNDIRECTED);
+		population = gL.loadGraph();
+		
+		sampler = new RNDWalkSampler(1.0, 1.0, EdgeType.UNDIRECTED);
+		System.out.println(sampler.sampleGraph(population).getCSV());
+		sample = sampler.getGraph();
+
+		JUnitUtils.checkGraphs(sample, population);
+	}
+	
+	
 	/**
 	 * Sample a graph completely and check if they're the same. Looks at vertexes in addition to edges
 	 * @throws Error 

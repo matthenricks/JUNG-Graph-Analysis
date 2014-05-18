@@ -25,7 +25,7 @@ public class KolmogorovSmirnovTest {
 		}
 		catch (java.lang.IllegalArgumentException e) {
 			if (e.getMessage().matches("^Invalid SP.+E\\-[0-9]+$")) {
-				e.printStackTrace();
+//				e.printStackTrace();
 				return 0;
 			} else if (e.getMessage().matches("^Invalid SP -Infinity$")) {
 				e.printStackTrace();

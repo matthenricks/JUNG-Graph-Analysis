@@ -8,6 +8,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import edu.uci.ics.jung.algorithms.scoring.DegreeScorer;
+import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import edu.uci.ics.jung.graph.UndirectedSparseGraph;
+
 public class TestRunner {
 
 	private static class writeInts implements Runnable {
@@ -42,6 +46,26 @@ public class TestRunner {
 	
 	public static void main(String[] args) throws InterruptedException, IOException, Error {
 
+		// Create the graph
+		UndirectedSparseGraph<String, String> dGraph = new UndirectedSparseGraph<String, String>();
+		dGraph.addVertex("A");
+		dGraph.addVertex("B");
+		dGraph.addVertex("C");
+
+		dGraph.addEdge("e1", "A", "B");
+		dGraph.addEdge("e2", "B", "A");
+		
+		// Run the degree algorithm
+		DegreeScorer<String> ds = new DegreeScorer<String>(dGraph);
+		Integer degree;
+		for (String vertex : dGraph.getVertices()) {
+			degree = ds.getVertexScore(vertex);
+			System.out.println(vertex + "," + degree.toString());
+		}
+	
+		
+		
+		
 //		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("export.csv")));
 //		bw.write(
 //				Double.POSITIVE_INFINITY + "," +

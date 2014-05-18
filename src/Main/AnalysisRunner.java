@@ -2,8 +2,10 @@ package Main;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -25,12 +27,15 @@ import Correlation.KolmogorovSmirnovTest;
 import Correlation.MeasureComparison;
 import GraphAnalyzers.AnalyzerDistribution;
 import GraphAnalyzers.BCAnalyzer;
-import GraphAnalyzers.DegreeAnalyzer;
 import GraphAnalyzers.EDAnalyzer;
+import GraphAnalyzers.InDegreeAnalyzer;
+import GraphAnalyzers.OutDegreeAnalyzer;
 import GraphAnalyzers.WCCSizeAnalysis;
 import GraphCreation.BasicGraph;
 import GraphCreation.GeneratedGraph;
-import SamplingAlgorithms.RNDBFSSampler;
+import SamplingAlgorithms.RNDBFSSingleSampler;
+import SamplingAlgorithms.RNDWalkMetroHastingsSampler;
+import SamplingAlgorithms.RNDWalkSampler;
 import SamplingAlgorithms.TargetedSampleMethod;
 import Utils.ArgumentReader;
 import Utils.CSV_Builder;
@@ -47,15 +52,19 @@ import edu.uci.ics.jung.graph.Graph;
  */
 public class AnalysisRunner {
 	
-	static final double[] thresholdArea = {0, 1.0};
-	static final int replicaLength = 3;
-	static final int[] maxSampleArea = {Integer.MAX_VALUE};
+	static final int replicaLength = 10;
 				
 	// Make this entire thing an alpha loop
 	static final double[] alphaArea = {
-			0.01, 0.02, 0.03, 0.04, // 0.05 }; 
+			0.01, 0.02, 0.03, 0.04, 0.05, 
+			0.06, 0.07, 0.08, 0.09, 0.1
+	};
+	
+	/**
+	 * 0.01, 0.02, 0.03, 0.04, // 0.05 }; 
 			0.05, 0.1, 0.15, 
-			0.2, 0.3, 0.4, 0.6 , 0.8, 1.0};
+			0.2, 0.3, 0.4, 0.6 , 0.8, 1.0};1
+	 */
 	
 	
 	static volatile ExecutorService threadPool;
@@ -111,17 +120,20 @@ public class AnalysisRunner {
 	 */
 	// Volatile is needed since they aren't pulled from a function
 	static volatile ConcurrentHashMap<String, Double> populationBC;
-	static volatile ConcurrentHashMap<String, Double> populationDegree;
+	static volatile ConcurrentHashMap<String, Double> populationInDegree;
+	static volatile ConcurrentHashMap<String, Double> populationOutDegree;
 	static volatile ConcurrentHashMap<String, Double> populationED;
+
 	
 	private static Lock popSetLock = new ReentrantLock();
 	private static Condition popWait = popSetLock.newCondition();
 	
-	public static void setPop(Map<String, Double> popBC, Map<String, Double> popDegree, Map<String, Double> popED) {
+	public static void setPop(Map<String, Double> popBC, Map<String, Double> popInDegree, Map<String, Double> popOutDegree, Map<String, Double> popED) {
 		popSetLock.lock();
 		System.out.println("Population Values Posted");
 		populationBC = new ConcurrentHashMap<String, Double>(popBC);
-		populationDegree = new ConcurrentHashMap<String, Double>(popDegree);
+		populationInDegree = new ConcurrentHashMap<String, Double>(popInDegree);
+		populationOutDegree = new ConcurrentHashMap<String, Double>(popOutDegree);
 		populationED = new ConcurrentHashMap<String, Double>(popED);
 		popWait.signalAll();
 		popSetLock.unlock();
@@ -130,7 +142,7 @@ public class AnalysisRunner {
 	public static void waitForPop() throws InterruptedException {
 		// Wait until the populationBC has been written to
 		popSetLock.lock();
-		while(populationBC == null || populationDegree == null || populationED == null) {
+		while(populationBC == null || populationInDegree == null || populationOutDegree == null || populationED == null) {
 			System.out.println("Sample thread waiting for Population BC Values");
 			popWait.await();
 		}
@@ -211,13 +223,15 @@ public class AnalysisRunner {
 				// TODO: ANALYZERS HERE
 				Map<String, AnalyzerDistribution> analyzers = new HashMap<String, AnalyzerDistribution>();
 				analyzers.put(HardCode.pBcPostfix, (new BCAnalyzer()));
-				analyzers.put(HardCode.pDegreePostfix, (new DegreeAnalyzer()));
+				analyzers.put(HardCode.pDegreeInPostfix, (new InDegreeAnalyzer()));
+				analyzers.put(HardCode.pDegreeOutPostfix, (new OutDegreeAnalyzer()));
 				analyzers.put(HardCode.pEDPostfix, (new EDAnalyzer()));
 			
 				// A grouping for all of the sample outputs
 				HashMap<String, Double> bcVal = null;
 				HashMap<String, Double> edVal = null;
-				HashMap<String, Double> deVal = null;
+				HashMap<String, Double> ideVal = null;
+				HashMap<String, Double> odeVal = null;
 				
 				// Run all of the analyzers
 				for (Entry<String, AnalyzerDistribution> analyzer : analyzers.entrySet()) {
@@ -234,14 +248,21 @@ public class AnalysisRunner {
 						bcVal = sampleValue;
 						
 						cDur.LinkToEnd(MeasureComparison.compare(populationBC, sampleValue));
-						double[] badValues = {0};
+						double[] badValues = {};
 						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationBC, sampleValue, badValues)); // [KS, KS adj]
-					} else if (analyzer.getValue() instanceof DegreeAnalyzer) {
-						deVal = sampleValue;
+					} else if (analyzer.getValue() instanceof InDegreeAnalyzer) {
+						ideVal = sampleValue;
 
-						cDur.LinkToEnd(MeasureComparison.compare(populationDegree, sampleValue));
-						double[] badValues = {0, 1};
-						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationDegree, sampleValue, badValues)); // [KS, KS adj]
+						cDur.LinkToEnd(MeasureComparison.compare(populationInDegree, sampleValue));
+						double[] badValues = {};
+						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationInDegree, sampleValue, badValues)); // [KS, KS adj]
+					} else if (analyzer.getValue() instanceof OutDegreeAnalyzer) {
+						odeVal = sampleValue;
+
+						cDur.LinkToEnd(MeasureComparison.compare(populationOutDegree, sampleValue));
+						// ROSO: Remove bad values
+						double[] badValues = {};
+						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationOutDegree, sampleValue, badValues)); // [KS, KS adj]
 					} else {
 						edVal = sampleValue;
 
@@ -258,19 +279,24 @@ public class AnalysisRunner {
 				// Does the top 10% of a sample predict the top 10% of another sample?
 				ArrayList<Entry<String, Double>> bcList = new ArrayList<Entry<String, Double>>(bcVal.entrySet());
 				ArrayList<Entry<String, Double>> edList = new ArrayList<Entry<String, Double>>(edVal.entrySet());
-				ArrayList<Entry<String, Double>> deList = new ArrayList<Entry<String, Double>>(deVal.entrySet());
+				ArrayList<Entry<String, Double>> ideList = new ArrayList<Entry<String, Double>>(ideVal.entrySet());
+				ArrayList<Entry<String, Double>> odeList = new ArrayList<Entry<String, Double>>(odeVal.entrySet());
 				
 				Collections.sort(bcList, MeasureComparison.entrySort);
 				Collections.sort(edList, MeasureComparison.entrySort);
-				Collections.sort(deList, MeasureComparison.entrySort);
+				Collections.sort(ideList, MeasureComparison.entrySort);
+				Collections.sort(odeList, MeasureComparison.entrySort);
 				
 				double[] topPercentages = {0.1, 0.2, 0.5};
 				
 				// Returns: percent, precision, recall
 				List<CSV_Builder> crossCorrelations = new LinkedList<CSV_Builder>();
 				crossCorrelations.add(new CSV_Builder("BC-ED", MeasureComparison.PRCompare(bcList, edList, topPercentages)));
-				crossCorrelations.add(new CSV_Builder("BC-Degree", MeasureComparison.PRCompare(bcList, deList, topPercentages)));
-				crossCorrelations.add(new CSV_Builder("ED-Degree", MeasureComparison.PRCompare(edList, deList, topPercentages)));
+				crossCorrelations.add(new CSV_Builder("BC-InDegree", MeasureComparison.PRCompare(bcList, ideList, topPercentages)));
+				crossCorrelations.add(new CSV_Builder("ED-InDegree", MeasureComparison.PRCompare(edList, ideList, topPercentages)));
+				crossCorrelations.add(new CSV_Builder("OutDegree-BC", MeasureComparison.PRCompare(odeList, bcList, topPercentages)));
+				crossCorrelations.add(new CSV_Builder("OutDegree-ED", MeasureComparison.PRCompare(odeList, edList, topPercentages)));
+				crossCorrelations.add(new CSV_Builder("OutDegree-InDegree", MeasureComparison.PRCompare(odeList, ideList, topPercentages)));
 				
 				// Write out the respective job times
 				BufferedWriter jobOutput = new BufferedWriter(new FileWriter(Utils.FileSystem.findOpenPath(aFolder + HardCode.pSummaryPostfix)));
@@ -303,6 +329,10 @@ public class AnalysisRunner {
 	 */
 	public static void main(String[] args) throws Exception {
 		
+		// Thresholds, don't do the random twice (aka having the 0.0)
+		double[] thresholdArea = {0.0, 1.0};
+		double[] thresholdArea2 = {1.0};
+		
 		// Set up the thread executors
 		threadPool = Executors.newCachedThreadPool();
 		
@@ -316,6 +346,10 @@ public class AnalysisRunner {
 		// Make the overall output folder
 		Utils.FileSystem.createFolder(loader.myOutput);
 		
+		// Redirect the output, including errors
+		System.setOut(new PrintStream(new FileOutputStream(new File(loader.myOutput + "/Console.txt"))));
+		System.setErr(new PrintStream(new FileOutputStream(new File(loader.myOutput + "/Err.txt"))));
+
 		// Import in the overall graph
 		StringBuilder summary = new StringBuilder();
 		Graph<String, String> graph;
@@ -338,21 +372,24 @@ public class AnalysisRunner {
 		/** Run the population analysis **/
 		// Either run a thread to load the BC, or import in a finished BC import
 		String sPopBC = HardCode.pBcPostfix, 
-				sPopDegree = HardCode.pDegreePostfix,
+				sPopInDegree = HardCode.pDegreeInPostfix,
+				sPopOutDegree = HardCode.pDegreeOutPostfix,
 				sPopED = HardCode.pEDPostfix;
 		if (loader.myPopPath == null) {
 			Utils.FileSystem.createFolder(loader.myOutput + HardCode.pDistroFolder);
 			sPopBC = loader.myOutput + HardCode.pDistroFolder + sPopBC;
-			sPopDegree = loader.myOutput + HardCode.pDistroFolder + sPopDegree;
+			sPopInDegree = loader.myOutput + HardCode.pDistroFolder + sPopInDegree;
+			sPopOutDegree = loader.myOutput + HardCode.pDistroFolder + sPopOutDegree;
 			sPopED = loader.myOutput + HardCode.pDistroFolder + sPopED;
 		} else {
 			sPopBC = loader.myPopPath + sPopBC;
-			sPopDegree = loader.myPopPath + sPopDegree;
+			sPopInDegree = loader.myPopPath + sPopInDegree;
+			sPopOutDegree = loader.myPopPath + sPopOutDegree;
 			sPopED = loader.myPopPath + sPopED;
 		}
 		
 		/** Now generate/load the results **/
-		ConcurrentHashMap<String, Double> popBC, popDegree, popED;
+		ConcurrentHashMap<String, Double> popBC, popInDegree, popOutDegree, popED;
 		// BC
 		if ((new File(sPopBC)).exists()) {
 			popBC = new ConcurrentHashMap<String, Double>(
@@ -363,14 +400,24 @@ public class AnalysisRunner {
 					(new BCAnalyzer()).analyzeGraph(graph, sPopBC));
 			mainTracker.endTracking("Pop BC Calculation");
 		}
-		// Degree
-		if ((new File(sPopDegree)).exists()) {
-			popDegree = new ConcurrentHashMap<String, Double>(
-					(new DegreeAnalyzer()).read(sPopDegree));
+		// InDegree
+		if ((new File(sPopInDegree)).exists()) {
+			popInDegree = new ConcurrentHashMap<String, Double>(
+					(new InDegreeAnalyzer()).read(sPopInDegree));
 		} else {
 			mainTracker.startTracking("Pop Degree Calculation");
-			popDegree = new ConcurrentHashMap<String, Double>(
-					(new DegreeAnalyzer()).analyzeGraph(graph, sPopDegree));
+			popInDegree = new ConcurrentHashMap<String, Double>(
+					(new InDegreeAnalyzer()).analyzeGraph(graph, sPopInDegree));
+			mainTracker.endTracking("Pop Degree Calculation");
+		}
+		// OutDegree
+		if ((new File(sPopOutDegree)).exists()) {
+			popOutDegree = new ConcurrentHashMap<String, Double>(
+					(new OutDegreeAnalyzer()).read(sPopOutDegree));
+		} else {
+			mainTracker.startTracking("Pop Degree Calculation");
+			popOutDegree = new ConcurrentHashMap<String, Double>(
+					(new OutDegreeAnalyzer()).analyzeGraph(graph, sPopOutDegree));
 			mainTracker.endTracking("Pop Degree Calculation");
 		}
 		// Ego-centric Density
@@ -387,7 +434,7 @@ public class AnalysisRunner {
 		// TODO: Make this stored for later
 		writeBasicInformation(mainTracker, graph, loader.myOutput, "population");
 		
-		AnalysisRunner.setPop(popBC, popDegree, popED);
+		AnalysisRunner.setPop(popBC, popInDegree, popOutDegree, popED);
 
 		
 		/** Begin the sampling **/
@@ -395,83 +442,209 @@ public class AnalysisRunner {
 		String sampleOverallDir = loader.myOutput + HardCode.pSamplesFolder;
 		Utils.FileSystem.createFolder(sampleOverallDir);
 		
-		// The CSV's from the sample section that will be combined with the Population information
-		LinkedList<CSV_Builder> results = new LinkedList<CSV_Builder>();
-
 		// Begin the sampling!
+		LinkedList<CSV_Builder> testType = new LinkedList<CSV_Builder>();
 		
+		CSV_Builder test = new CSV_Builder("OLDBFSRND");
+		String mFolder = sampleOverallDir + "OLDBFSRND";
+		Utils.FileSystem.createFolder(mFolder);
+
 		for (double threshold : thresholdArea) {
-			String tFolder = sampleOverallDir + "thresh" + HardCode.dcf.format(threshold*10000);
+			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
 			Utils.FileSystem.createFolder(tFolder);
-			// A total of log2(1/0.0035) iterations
-			// for (int maxSampleAdd : maxSampleArea) {
-			for (int maxSampleAdd = Integer.MAX_VALUE; maxSampleAdd == Integer.MAX_VALUE; maxSampleAdd--) {
-				// Calculate the percentage of the main graph this is
-				String mFolder = tFolder + "/max" + maxSampleAdd;
-				Utils.FileSystem.createFolder(mFolder);
+			
+			// Create an array to hold the different threads
+			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+			
+			// Run the analysis
+			for (int replica = 0; replica < replicaLength; replica++) {
+				// Uniquely name this version and create its folder
+				String sampleName = "sample" + replica;
+				String sampleDir = tFolder + "/" + sampleName;
+				Utils.FileSystem.createFolder(sampleDir);
 				
-				// Create an array to hold the different threads
-				ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+				// Create the shell of the sample
+				TargetedSampleMethod sampleMethod = new RNDBFSSingleSampler(0.00, threshold, graph.getDefaultEdgeType());
 				
-				// Finally run the analysis
-				
-				for (int replica = 0; replica < replicaLength; replica++) {
-					// Uniquely name this version and create its folder
-					String sampleName = "sample" + replica;
-					String sampleDir = mFolder + "/" + sampleName;
-					Utils.FileSystem.createFolder(sampleDir);
-					
-					// Create the shell of the sample
-					TargetedSampleMethod sampleMethod = new RNDBFSSampler(0.00, threshold, graph.getDefaultEdgeType());
-					
-					// Run the sample threads
-					// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
-					tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
-				}
-
-				// Add the results onto the last to be added CSV_Builder
-				CSV_Builder cMaxSample = new CSV_Builder(maxSampleAdd);
-
-				// maxEdge(#) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-					try {
-						cMaxSample.LinkTo(retVal.get());
-					} catch (ExecutionException e) {
-						e.printStackTrace();
-						System.err.println("culprit is one of: " + mFolder);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-						System.err.println("the iteration probably took too long: " + mFolder);						
-					}
-				}
-//				for (Callable<CSV_Builder> task : tasks) {
-//					cMaxSample.LinkTo(task.call());
-//				}
-				
-				// cMaxEdge = maxSample(#), // Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
-				// input = threshold, maxSample(#), cMaxEdge
-				CSV_Builder input = new CSV_Builder(new CSV_Percent(1-threshold), //threshold
-											cMaxSample //maxSample (#) --> sample output data
-										);
-				
-				results.add(input);
-				tasks.clear();
+				// Run the sample threads
+				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
 			}
+
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
+			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+				try {
+					input.LinkTo(retVal.get());
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+					System.err.println("culprit is one of: " + tFolder);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					System.err.println("the iteration probably took too long: " + tFolder);						
+				}
+			}
+				
+				
+			test.LinkTo(input);
+			tasks.clear();
 		}
+		testType.add(test);		
 		
-		// Add the sample type and link that to all the inputs
-		CSV_Builder sampleType = new CSV_Builder("RNDBFS");
-		
-		// Results array: threshold, maxSample(#), // Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
-		// Link: sampleType
-		for (CSV_Builder builder : results) {
-			sampleType.LinkTo(builder);
+		/** Begin New Sampling! **/
+		test = new CSV_Builder("BFSRND");
+		mFolder = sampleOverallDir + "BFSRND";
+		Utils.FileSystem.createFolder(mFolder);
+		for (double threshold : thresholdArea2) {
+			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
+			Utils.FileSystem.createFolder(tFolder);
+			
+			// Create an array to hold the different threads
+			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+			
+			// Run the analysis
+			for (int replica = 0; replica < replicaLength; replica++) {
+				// Uniquely name this version and create its folder
+				String sampleName = "sample" + replica;
+				String sampleDir = tFolder + "/" + sampleName;
+				Utils.FileSystem.createFolder(sampleDir);
+				
+				// Create the shell of the sample
+				TargetedSampleMethod sampleMethod = new RNDBFSSingleSampler(0.00, threshold, graph.getDefaultEdgeType());
+				
+				// Run the sample threads
+				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
+			}
+
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
+			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+				try {
+					input.LinkTo(retVal.get());
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+					System.err.println("culprit is one of: " + tFolder);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					System.err.println("the iteration probably took too long: " + tFolder);						
+				}
+			}
+				
+			test.LinkTo(input);
+			tasks.clear();	
 		}
+		// Add the sample type to the test
+		testType.add(test);
+
+		
+		/** Random Walk Sampling! **/
+		// Begin the sampling!
+		test = new CSV_Builder("RNDWalk");
+		mFolder = sampleOverallDir + "RNDWalk";
+		Utils.FileSystem.createFolder(mFolder);
+		for (double threshold : thresholdArea2) {
+			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
+			Utils.FileSystem.createFolder(tFolder);
+			
+			// Create an array to hold the different threads
+			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+			
+			// Run the analysis
+			for (int replica = 0; replica < replicaLength; replica++) {
+				// Uniquely name this version and create its folder
+				String sampleName = "sample" + replica;
+				String sampleDir = tFolder + "/" + sampleName;
+				Utils.FileSystem.createFolder(sampleDir);
+				
+				// Create the shell of the sample
+				TargetedSampleMethod sampleMethod = new RNDWalkSampler(0.00, threshold, graph.getDefaultEdgeType());
+				
+				// Run the sample threads
+				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
+			}
+
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
+			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+				try {
+					input.LinkTo(retVal.get());
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+					System.err.println("culprit is one of: " + tFolder);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					System.err.println("the iteration probably took too long: " + tFolder);						
+				}
+			}
+				
+			test.LinkTo(input);
+			tasks.clear();	
+		}
+		// Add the sample type to the test
+		testType.add(test);
+		
+		
+		/** Random Metro-Hastings Walk Sampling! **/
+		// Begin the sampling!
+		test = new CSV_Builder("MRNDWalk");
+		mFolder = sampleOverallDir + "MRNDWalk";
+		Utils.FileSystem.createFolder(mFolder);
+		for (double threshold : thresholdArea2) {
+			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
+			Utils.FileSystem.createFolder(tFolder);
+			
+			// Create an array to hold the different threads
+			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+			
+			// Run the analysis
+			for (int replica = 0; replica < replicaLength; replica++) {
+				// Uniquely name this version and create its folder
+				String sampleName = "sample" + replica;
+				String sampleDir = tFolder + "/" + sampleName;
+				Utils.FileSystem.createFolder(sampleDir);
+				
+				// Create the shell of the sample
+				TargetedSampleMethod sampleMethod = new RNDWalkMetroHastingsSampler(0.00, threshold, graph.getDefaultEdgeType());
+				
+				// Run the sample threads
+				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
+			}
+
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
+			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+				try {
+					input.LinkTo(retVal.get());
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+					System.err.println("culprit is one of: " + tFolder);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					System.err.println("the iteration probably took too long: " + tFolder);						
+				}
+			}
+				
+			test.LinkTo(input);
+			tasks.clear();	
+		}
+		// Add the sample type to the test
+		testType.add(test);
+		
+		// TODO:
+		/** Random Forest Sampling **/
+		/** file:///C:/Users/MOREPOWER/Downloads/1004.1729v1.pdf **/
+		
+		// Stop all the threads
+		stopAllThreads();
+		
 
 		// Lastly add the sample type used and the overall graph information
 		CSV_Builder mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
 				new CSV_Builder(graph.getEdgeCount(), // parent edge count
-						sampleType)); // sample method type
+						testType)); // sample method type
 		
 		// Results array: threshold, maxSample(#), ID, alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 		// Link: sampleType
@@ -482,7 +655,7 @@ public class AnalysisRunner {
 				+ "\"Parent Edge Count\","
 				+ "\"Sample Method Type\","
 				+ "\"BFS:RND\","
-				+ "\"Maximum Sample (#)\","
+//				+ "\"Maximum Sample (#)\","
 				+ "\"Replica ID\","
 				+ "\"Alpha (%)\","
 				+ "\"Sample Node Count\","
@@ -490,8 +663,8 @@ public class AnalysisRunner {
 				// CC values
 				+ "\"Cross-Correlation Type\","
 				+ "\"Percentage Amount\","
-				+ "\"Precision\","
-				+ "\"Recall\","
+				+ "\"Jacaards\","
+				+ "\"Jacaards2\","
 				// End CC
 				+ "\"Real Alpha\","
 				+ "\"Real BFS:RND\","

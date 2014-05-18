@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.naming.ldap.Rdn;
 
@@ -15,17 +16,66 @@ import org.junit.Test;
 
 import Correlation.KolmogorovSmirnovTest;
 import GraphAnalyzers.BCAnalyzer;
+import GraphAnalyzers.InDegreeAnalyzer;
+import GraphAnalyzers.OutDegreeAnalyzer;
 import GraphCreation.BarabasiAlbertGraphGenerator;
 import GraphCreation.GraphLoader;
 import SamplingAlgorithms.RDBFSSample;
 import SamplingAlgorithms.RNDBFSSampler;
 import Utils.FileSystem;
 import Utils.HardCode;
+import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 public class Calculations {
 
+	// TODO: Try all of the In/OutDegree
+	@Test
+	public void degreeDirectedTest() throws IOException {
+		DirectedSparseGraph<String, String> dGraph = new DirectedSparseGraph<String, String>();
+		dGraph.addVertex("A");
+		dGraph.addVertex("B");
+		dGraph.addVertex("C");
+
+		dGraph.addEdge("e1", "A", "B");
+		dGraph.addEdge("e2", "B", "A");
+		dGraph.addEdge("e3", "C", "B");
+		
+		Map<String, Double> ret = (new InDegreeAnalyzer()).analyzeGraph(dGraph, "in2.csv");
+		assert(ret.get("A") == 1.0);
+		assert(ret.get("B") == 2.0);
+		assert(ret.get("C") == 0.0);
+
+		ret = (new OutDegreeAnalyzer()).analyzeGraph(dGraph, "out2.csv");
+		assert(ret.get("A") == 1.0);
+		assert(ret.get("B") == 1.0);
+		assert(ret.get("C") == 1.0);
+	}
+	
+	@Test
+	public void degreeUndirectedTest() throws IOException {
+		UndirectedSparseGraph<String, String> dGraph = new UndirectedSparseGraph<String, String>();
+		dGraph.addVertex("A");
+		dGraph.addVertex("B");
+		dGraph.addVertex("C");
+
+		dGraph.addEdge("e1", "A", "B");
+		dGraph.addEdge("e2", "B", "A");
+		dGraph.addEdge("e3", "C", "B");
+		
+		Map<String, Double> ret = (new InDegreeAnalyzer()).analyzeGraph(dGraph, "in1.csv");
+		assert(ret.get("A") == 1.0);
+		assert(ret.get("B") == 2.0);
+		assert(ret.get("C") == 1.0);
+
+		ret = (new OutDegreeAnalyzer()).analyzeGraph(dGraph, "out1.csv");
+		assert(ret.get("A") == 1.0);
+		assert(ret.get("B") == 2.0);
+		assert(ret.get("C") == 1.0);
+	}
+	
 	@Test
 	public void roundingTest() {
 		double arg[] = {1.12345};
