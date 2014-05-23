@@ -34,6 +34,7 @@ import GraphAnalyzers.WCCSizeAnalysis;
 import GraphCreation.BasicGraph;
 import GraphCreation.GeneratedGraph;
 import SamplingAlgorithms.RNDBFSSingleSampler;
+import SamplingAlgorithms.RNDForestFirePaperSampler;
 import SamplingAlgorithms.RNDWalkMetroHastingsSampler;
 import SamplingAlgorithms.RNDWalkSampler;
 import SamplingAlgorithms.TargetedSampleMethod;
@@ -53,11 +54,82 @@ import edu.uci.ics.jung.graph.Graph;
 public class AnalysisRunner {
 	
 	static final int replicaLength = 10;
-				
+	
+	static final String csv_header = "\"Parent Node Count\","
+						+ "\"Parent Edge Count\","
+						+ "\"Sample Method Type\","
+						+ "\"BFS:RND\","
+//						+ "\"Maximum Sample (#)\","
+						+ "\"Replica ID\","
+						+ "\"Alpha (%)\","
+						+ "\"Sample Node Count\","
+						+ "\"Sample Edge Count\","
+						// CC values
+						+ "\"Cross-Correlation Type\","
+						+ "\"Percentage Amount\","
+						+ "\"Jacaards\","
+						+ "\"Jacaards2\","
+						// End CC
+						+ "\"Real Alpha\","
+						+ "\"Real BFS:RND\","
+						+ "\"Sample WCC Count\","
+						+ "\"Sample Metric Duration\","
+						+ "\"Measure\","
+						+ "\"Sample Correlation Alpha (%)\","
+						+ "\"Spearmans\","
+						+ "\"Pearsons\","
+						+ "\"Error\","
+//						+ "\"KL\","
+						+ "\"Population P/R Alpha\","
+						+ "\"Sample P/R Alpha\","
+						+ "\"Precision\","
+						+ "\"Recall\","
+						+ "\"KS Statistic\","
+					;
+	
+	static final String csv_header_FF = 
+			"\"Parent Node Count\","
+			+ "\"Parent Edge Count\","
+			+ "\"Sample Method Type\","
+			+ "\"Forward Probability\","
+			+ "\"Backward Probability\","
+			+ "\"FF:RND\","
+//			+ "\"Maximum Sample (#)\","
+			+ "\"Replica ID\","
+			+ "\"Alpha (%)\","
+			+ "\"Sample Node Count\","
+			+ "\"Sample Edge Count\","
+			// CC values
+			+ "\"Cross-Correlation Type\","
+			+ "\"Percentage Amount\","
+			+ "\"Jacaards\","
+			+ "\"Jacaards2\","
+			// End CC
+			+ "\"Real Alpha\","
+			+ "\"Real BFS:RND\","
+			+ "\"Sample WCC Count\","
+			+ "\"Sample Metric Duration\","
+			+ "\"Measure\","
+			+ "\"Sample Correlation Alpha (%)\","
+			+ "\"Spearmans\","
+			+ "\"Pearsons\","
+			+ "\"Error\","
+//			+ "\"KL\","
+			+ "\"Population P/R Alpha\","
+			+ "\"Sample P/R Alpha\","
+			+ "\"Precision\","
+			+ "\"Recall\","
+			+ "\"KS Statistic\","
+		;
+	
+	// Probability needed for the Forest Fire
+	static final double[] forwardProb = {0.2, 0.5, 0.8};
+	static final double[] backProb = {0, 0, 0};
+	
 	// Make this entire thing an alpha loop
 	static final double[] alphaArea = {
 			0.01, 0.02, 0.03, 0.04, 0.05, 
-			0.06, 0.07, 0.08, 0.09, 0.1
+			0.08, 0.1
 	};
 	
 	/**
@@ -330,7 +402,7 @@ public class AnalysisRunner {
 	public static void main(String[] args) throws Exception {
 		
 		// Thresholds, don't do the random twice (aka having the 0.0)
-		double[] thresholdArea = {0.0, 1.0};
+		double[] thresholdArea = {0.0};
 		double[] thresholdArea2 = {1.0};
 		
 		// Set up the thread executors
@@ -436,6 +508,8 @@ public class AnalysisRunner {
 		
 		AnalysisRunner.setPop(popBC, popInDegree, popOutDegree, popED);
 
+		// Set the folder to store the analysis results
+		Utils.FileSystem.createFolder(loader.myOutput + HardCode.pAnalysisFolder);
 		
 		/** Begin the sampling **/
 		// Create the folder space for the processes
@@ -443,13 +517,11 @@ public class AnalysisRunner {
 		Utils.FileSystem.createFolder(sampleOverallDir);
 		
 		// Begin the sampling!
-		LinkedList<CSV_Builder> testType = new LinkedList<CSV_Builder>();
-		
-		CSV_Builder test = new CSV_Builder("OLDBFSRND");
-		String mFolder = sampleOverallDir + "OLDBFSRND";
+		String testName = "OLDBFSRND";
+		CSV_Builder test = new CSV_Builder(testName);
+		String mFolder = sampleOverallDir + testName;
 		Utils.FileSystem.createFolder(mFolder);
-
-		for (double threshold : thresholdArea) {
+		for (double threshold : thresholdArea2) {
 			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
 			Utils.FileSystem.createFolder(tFolder);
 			
@@ -489,11 +561,89 @@ public class AnalysisRunner {
 			test.LinkTo(input);
 			tasks.clear();
 		}
-		testType.add(test);		
 		
-		/** Begin New Sampling! **/
-		test = new CSV_Builder("BFSRND");
-		mFolder = sampleOverallDir + "BFSRND";
+		
+		// Lastly add the sample type used and the overall graph information
+		CSV_Builder mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
+				new CSV_Builder(graph.getEdgeCount(), // parent edge count
+						test)); // sample method type
+		
+		// Results array: threshold, maxSample(#), ID, alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+		// Link: sampleType
+
+		// Output the statistics on the correlations
+		BufferedWriter csvOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pAnalysisFolder + "/" + testName + HardCode.pCorrPostfix));
+		csvOutput.write(csv_header);
+		csvOutput.newLine();
+		mainData.writeCSV(csvOutput);
+		csvOutput.close();
+		
+		
+		/** Now begin the completely random sampling */
+		/** Begin New BFS Sampling! **/
+		testName = "RND";
+		test = new CSV_Builder(testName);
+		mFolder = sampleOverallDir + testName;
+		Utils.FileSystem.createFolder(mFolder);
+		for (double threshold : thresholdArea) {
+			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
+			Utils.FileSystem.createFolder(tFolder);
+			
+			// Create an array to hold the different threads
+			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+			
+			// Run the analysis
+			for (int replica = 0; replica < replicaLength; replica++) {
+				// Uniquely name this version and create its folder
+				String sampleName = "sample" + replica;
+				String sampleDir = tFolder + "/" + sampleName;
+				Utils.FileSystem.createFolder(sampleDir);
+				
+				// Create the shell of the sample
+				TargetedSampleMethod sampleMethod = new RNDBFSSingleSampler(0.00, threshold, graph.getDefaultEdgeType());
+				
+				// Run the sample threads
+				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
+			}
+
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
+			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+				try {
+					input.LinkTo(retVal.get());
+				} catch (ExecutionException e) {
+					e.printStackTrace();
+					System.err.println("culprit is one of: " + tFolder);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+					System.err.println("the iteration probably took too long: " + tFolder);						
+				}
+			}
+				
+			test.LinkTo(input);
+			tasks.clear();	
+		}
+		// Lastly add the sample type used and the overall graph information
+		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
+				new CSV_Builder(graph.getEdgeCount(), // parent edge count
+						test)); // sample method type
+		
+		// Results array: threshold, maxSample(#), ID, alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+		// Link: sampleType
+
+		// Output the statistics on the correlations
+		csvOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pAnalysisFolder + "/" + testName + HardCode.pCorrPostfix));
+		csvOutput.write(csv_header);
+		csvOutput.newLine();
+		mainData.writeCSV(csvOutput);
+		csvOutput.close();
+		
+		
+		/** Begin New BFS Sampling! **/
+		testName = "BFSRND";
+		test = new CSV_Builder(testName);
+		mFolder = sampleOverallDir + testName;
 		Utils.FileSystem.createFolder(mFolder);
 		for (double threshold : thresholdArea2) {
 			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
@@ -534,14 +684,28 @@ public class AnalysisRunner {
 			test.LinkTo(input);
 			tasks.clear();	
 		}
-		// Add the sample type to the test
-		testType.add(test);
+		// Lastly add the sample type used and the overall graph information
+		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
+				new CSV_Builder(graph.getEdgeCount(), // parent edge count
+						test)); // sample method type
+		
+		// Results array: threshold, maxSample(#), ID, alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+		// Link: sampleType
+
+		// Output the statistics on the correlations
+		csvOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pAnalysisFolder + "/" + testName + HardCode.pCorrPostfix));
+		csvOutput.write(csv_header);
+		csvOutput.newLine();
+		mainData.writeCSV(csvOutput);
+		csvOutput.close();
+		
 
 		
 		/** Random Walk Sampling! **/
 		// Begin the sampling!
-		test = new CSV_Builder("RNDWalk");
-		mFolder = sampleOverallDir + "RNDWalk";
+		testName = "RNDWalk";
+		test = new CSV_Builder(testName);
+		mFolder = sampleOverallDir + testName;
 		Utils.FileSystem.createFolder(mFolder);
 		for (double threshold : thresholdArea2) {
 			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
@@ -582,14 +746,29 @@ public class AnalysisRunner {
 			test.LinkTo(input);
 			tasks.clear();	
 		}
-		// Add the sample type to the test
-		testType.add(test);
+		// Lastly add the sample type used and the overall graph information
+		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
+				new CSV_Builder(graph.getEdgeCount(), // parent edge count
+						test)); // sample method type
+		
+		// Results array: threshold, maxSample(#), ID, alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+		// Link: sampleType
+
+		// Output the statistics on the correlations
+		csvOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pAnalysisFolder + "/" + testName + HardCode.pCorrPostfix));
+		csvOutput.write(csv_header);
+		csvOutput.newLine();
+		mainData.writeCSV(csvOutput);
+		csvOutput.close();
+
+		
 		
 		
 		/** Random Metro-Hastings Walk Sampling! **/
 		// Begin the sampling!
-		test = new CSV_Builder("MRNDWalk");
-		mFolder = sampleOverallDir + "MRNDWalk";
+		testName = "MRNDWalk";
+		test = new CSV_Builder(testName);
+		mFolder = sampleOverallDir + testName;
 		Utils.FileSystem.createFolder(mFolder);
 		for (double threshold : thresholdArea2) {
 			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
@@ -630,61 +809,95 @@ public class AnalysisRunner {
 			test.LinkTo(input);
 			tasks.clear();	
 		}
-		// Add the sample type to the test
-		testType.add(test);
-		
-		// TODO:
-		/** Random Forest Sampling **/
-		/** file:///C:/Users/MOREPOWER/Downloads/1004.1729v1.pdf **/
-		
-		// Stop all the threads
-		stopAllThreads();
-		
-
 		// Lastly add the sample type used and the overall graph information
-		CSV_Builder mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
+		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
 				new CSV_Builder(graph.getEdgeCount(), // parent edge count
-						testType)); // sample method type
+						test)); // sample method type
 		
 		// Results array: threshold, maxSample(#), ID, alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 		// Link: sampleType
 
 		// Output the statistics on the correlations
-		BufferedWriter csvOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pCorrPostfix));
-		csvOutput.write("\"Parent Node Count\","
-				+ "\"Parent Edge Count\","
-				+ "\"Sample Method Type\","
-				+ "\"BFS:RND\","
-//				+ "\"Maximum Sample (#)\","
-				+ "\"Replica ID\","
-				+ "\"Alpha (%)\","
-				+ "\"Sample Node Count\","
-				+ "\"Sample Edge Count\","
-				// CC values
-				+ "\"Cross-Correlation Type\","
-				+ "\"Percentage Amount\","
-				+ "\"Jacaards\","
-				+ "\"Jacaards2\","
-				// End CC
-				+ "\"Real Alpha\","
-				+ "\"Real BFS:RND\","
-				+ "\"Sample WCC Count\","
-				+ "\"Sample Metric Duration\","
-				+ "\"Measure\","
-				+ "\"Sample Correlation Alpha (%)\","
-				+ "\"Spearmans\","
-				+ "\"Pearsons\","
-				+ "\"Error\","
-//				+ "\"KL\","
-				+ "\"Population P/R Alpha\","
-				+ "\"Sample P/R Alpha\","
-				+ "\"Precision\","
-				+ "\"Recall\","
-				+ "KS Statistic"				
-			);
+		csvOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pAnalysisFolder + "/" + testName + HardCode.pCorrPostfix));
+		csvOutput.write(csv_header);
 		csvOutput.newLine();
 		mainData.writeCSV(csvOutput);
 		csvOutput.close();
+		
+
+		/** Random Forest Sampling **/
+		// Begin the sampling!
+		testName = "ForestFire";
+		test = new CSV_Builder(testName);
+		mFolder = sampleOverallDir + testName;
+		Utils.FileSystem.createFolder(mFolder);
+		for (double threshold : thresholdArea2) {
+			String tFolder = mFolder + "/thresh" + HardCode.dcf.format(threshold*10000);
+			Utils.FileSystem.createFolder(tFolder);
+			
+			// Back-probability and Forward probability should always be the same size
+			for (int i = 0; i < forwardProb.length; i++) {
+				// Create an array to hold the different threads
+				ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
+				
+				String fpFolder = tFolder + "/FP" + HardCode.dcf.format(forwardProb[i]*10000);
+				Utils.FileSystem.createFolder(fpFolder);
+				
+				// Run the analysis
+				for (int replica = 0; replica < replicaLength; replica++) {
+					// Uniquely name this version and create its folder
+					String sampleName = "sample" + replica;
+					String sampleDir = fpFolder + "/" + sampleName;
+					Utils.FileSystem.createFolder(sampleDir);
+					
+					// Create the shell of the sample
+					TargetedSampleMethod sampleMethod = new RNDForestFirePaperSampler(0.00, threshold, graph.getDefaultEdgeType(), forwardProb[i], backProb[i]);
+					
+					// Run the sample threads
+					// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+					tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
+				}
+				
+				CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+				// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
+				for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
+					try {
+						input.LinkTo(retVal.get());
+					} catch (ExecutionException e) {
+						e.printStackTrace();
+						System.err.println("culprit is one of: " + tFolder);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						System.err.println("the iteration probably took too long: " + tFolder);						
+					}
+				}
+				
+				// Create a csv-section for this
+				CSV_Builder run = new CSV_Builder(new CSV_Percent(forwardProb[i]), new CSV_Builder(new CSV_Percent(backProb[i]), input));
+				
+				// Link the input to the test it's on
+				test.LinkTo(run);
+				tasks.clear();	
+			}
+		}
+		
+		// Lastly add the sample type used and the overall graph information
+		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
+				new CSV_Builder(graph.getEdgeCount(), // parent edge count
+						test)); // sample method type
+		
+		// Results array: threshold, maxSample(#), ID, alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
+		// Link: sampleType
+
+		// Output the statistics on the correlations
+		csvOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pAnalysisFolder + "/" + testName + HardCode.pCorrPostfix));
+		csvOutput.write(csv_header_FF);
+		csvOutput.newLine();
+		mainData.writeCSV(csvOutput);
+		csvOutput.close();
+		
+		// Stop all the threads
+		stopAllThreads();
 		
 		// End the tracking over the entire job
 		mainTracker.endTracking("overall job");

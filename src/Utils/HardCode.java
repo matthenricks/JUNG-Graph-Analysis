@@ -63,7 +63,9 @@ public class HardCode {
 	
 	// Folder structural Strings for where information is being held/in what type of file
 	public static String pSummaryPostfix = "/summary.txt";
-	public static String pCorrPostfix = "/analysis.csv";
+	// Note, this should only be used with a forward slash added
+	public static String pAnalysisFolder = "/analysis";
+	public static String pCorrPostfix = "analysis.csv";
 	public static String pMetricPostfix = "/metrics.txt";
 	public static String pWccPostfix = "/WCC.csv";
 	public static String pBcPostfix = "/bc.csv";

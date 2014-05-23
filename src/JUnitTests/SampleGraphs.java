@@ -16,7 +16,10 @@ import GraphCreation.BarabasiAlbertGraphGenerator;
 import GraphCreation.GraphLoader;
 import SamplingAlgorithms.RNDBFSSampler;
 import SamplingAlgorithms.RNDBFSSingleSampler;
+import SamplingAlgorithms.RNDForestFirePaperSampler;
+import SamplingAlgorithms.RNDForestFireSampler;
 import SamplingAlgorithms.RNDWalkSampler;
+import SamplingAlgorithms.SampleMethod;
 import Utils.FileSystem;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
@@ -50,27 +53,55 @@ public class SampleGraphs {
 	}
 	
 	
-	@Test
-	public void TestRndWalkSample() throws IOException, Error {
-		Graph<String, String> population;
-		GraphLoader gL = new BarabasiAlbertGraphGenerator(200, 10, 50, EdgeType.DIRECTED);
-		population = gL.loadGraph();
-		
-		RNDWalkSampler sampler = new RNDWalkSampler(1.0, 1.0, EdgeType.DIRECTED);
-		System.out.println(sampler.sampleGraph(population).getCSV());
-		Graph<String, String> sample = sampler.getGraph();
-
-		JUnitUtils.checkGraphs(sample, population);
-		
-		gL = new BarabasiAlbertGraphGenerator(200, 10, 50, EdgeType.UNDIRECTED);
-		population = gL.loadGraph();
-		
-		sampler = new RNDWalkSampler(1.0, 1.0, EdgeType.UNDIRECTED);
-		System.out.println(sampler.sampleGraph(population).getCSV());
-		sample = sampler.getGraph();
-
-		JUnitUtils.checkGraphs(sample, population);
-	}
+// Edges aren't taken... Won't work
+//	@Test
+//	public void TestRndWalkSample() throws IOException, Error {
+//		Graph<String, String> population;
+//		GraphLoader gL = new BarabasiAlbertGraphGenerator(200, 10, 50, EdgeType.DIRECTED);
+//		population = gL.loadGraph();
+//		
+//		RNDWalkSampler sampler = new RNDWalkSampler(1.0, 1.0, EdgeType.DIRECTED);
+//		System.out.println(sampler.sampleGraph(population).getCSV());
+//		Graph<String, String> sample = sampler.getGraph();
+//
+//		JUnitUtils.checkGraphs(sample, population);
+//		
+//		gL = new BarabasiAlbertGraphGenerator(200, 10, 50, EdgeType.UNDIRECTED);
+//		population = gL.loadGraph();
+//		
+//		sampler = new RNDWalkSampler(1.0, 1.0, EdgeType.UNDIRECTED);
+//		System.out.println(sampler.sampleGraph(population).getCSV());
+//		sample = sampler.getGraph();
+//
+//		JUnitUtils.checkGraphs(sample, population);
+//	}
+	
+		@Test
+		public void TestFFSample() throws IOException, Error {
+			Graph<String, String> population;
+			GraphLoader gL = new BarabasiAlbertGraphGenerator(100, 50, 20, EdgeType.DIRECTED);
+			population = gL.loadGraph();
+			
+			double percentage = (double)population.getEdgeCount()/(double)population.getVertexCount();
+			System.out.println(percentage);
+			
+			SampleMethod sampler = new RNDForestFirePaperSampler(1.0, 1.0, EdgeType.DIRECTED, 0.25, 2);
+			System.out.println(sampler.sampleGraph(population).getCSV());
+			Graph<String, String> sample = sampler.getGraph();
+	
+			System.out.println((double)sample.getEdgeCount()/(double)sample.getVertexCount());
+			
+			// Not all the edges will be kept
+			assertTrue(sample.getEdgeCount() <= population.getEdgeCount());
+			
+			// Are all of the vertexes there
+			for (String vert : sample.getVertices()) {
+				population.containsVertex(vert);
+				// Does the population contain all the out and in-degree of the sample
+				population.getSuccessors(vert).containsAll(sample.getSuccessors(vert));
+				population.getPredecessors(vert).containsAll(sample.getPredecessors(vert));
+			}
+		}
 	
 	
 	/**

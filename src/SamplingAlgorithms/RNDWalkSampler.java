@@ -117,7 +117,7 @@ public class RNDWalkSampler implements TargetedSampleMethod {
 				}
 			} else {
 				// Attempt to walk from the last node, moving forward only
-				Collection<String> neighbors = new ArrayList<String>(parentGraph.getSuccessorCount(lastNode));
+				Collection<String> neighbors = new ArrayList<String>(parentGraph.getSuccessors(lastNode));
 				if (neighbors.size() > 0) {
 					
 					// Pick a neighbor at Random
@@ -159,6 +159,18 @@ public class RNDWalkSampler implements TargetedSampleMethod {
 						}
 					} else {
 						rerunCount++;
+						// Check to see if it's an UNDIRECTED graph and has the reversed connection
+						if (parentGraph.getDefaultEdgeType() == EdgeType.UNDIRECTED) {
+							if (sampledGraph.findEdge(current_vertex, lastNode) != null) {
+								lastNode = current_vertex;
+								continue;
+							}
+						}
+						// Now check for the current edge
+						String edge = parentGraph.findEdge(lastNode, current_vertex);
+						if (edge != null)
+							sampledGraph.addEdge(edge, lastNode, current_vertex);
+
 						lastNode = current_vertex;
 						continue;
 					}
@@ -177,7 +189,10 @@ public class RNDWalkSampler implements TargetedSampleMethod {
 			}
 			// Add the selected current vertex
 			sampledGraph.addVertex(current_vertex);
-			addAllEdges(current_vertex, parentGraph);
+			String edge = parentGraph.findEdge(lastNode, current_vertex);
+			if (edge != null)
+				sampledGraph.addEdge(edge, lastNode, current_vertex);
+			
 			// Set the last node to be the added node
 			lastNode = current_vertex;
 			rerunCount = 0; // Note, the only place this is added, it has a continue to avoid this section
@@ -200,35 +215,15 @@ public class RNDWalkSampler implements TargetedSampleMethod {
 		int rndCount = (new Random()).nextInt(neighbors.size());
 		int start = 0;
 		for (String node : neighbors) {
-			start++;
 			if (start == rndCount) {
 				return node;
 			}
+			start++;
 		}
 		return null;
 	}
 
 	protected boolean goodParent(Graph<String, String> parentGraph) {
 		return parentGraph.getVertexCount() == 0 || parentGraph.getEdgeCount() == 0;
-	}
-	
-	protected void addAllEdges(String current_vertex, Graph<String, String> parentGraph) {
-		Collection<String> allNodes = sampledGraph.getVertices();
-		for (String vert : allNodes) {
-			Collection<String> edges = parentGraph.findEdgeSet(vert, current_vertex);
-			edges.addAll(parentGraph.findEdgeSet(current_vertex, vert));
-			for (String edge : edges) {
-				if (!sampledGraph.containsEdge(edge)) {
-					Pair<String> endPoints = parentGraph.getEndpoints(edge);
-					// Check to see if the undirected counterpart is already added
-					String revEdge = sampledGraph.findEdge(endPoints.getSecond(), endPoints.getFirst());
-					if (revEdge != null && EdgeType.UNDIRECTED == sampledGraph.getEdgeType(revEdge)) {
-						System.err.println("Duplicate edge...");
-					} else {
-						sampledGraph.addEdge(edge, endPoints.getFirst(), endPoints.getSecond(), parentGraph.getEdgeType(edge));
-					}
-				}
-			}
-		}
 	}
 }
