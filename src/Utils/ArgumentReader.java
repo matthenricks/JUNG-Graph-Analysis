@@ -62,7 +62,7 @@ public class ArgumentReader {
 	 *      <string>
 	 *    --timeout
 	 *      <int of time> <timeunit>
-	 *    --sPopPath
+	 *    --pop
 	 *      <path to a folder of all the analysis :: String>
 	 * @param args
 	 * @return the arguments read in
