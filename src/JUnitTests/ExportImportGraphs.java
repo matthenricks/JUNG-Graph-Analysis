@@ -12,7 +12,11 @@ import Utils.FileSystem;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
-
+/**
+ * Tests the import/export functionality of the BasicGraph
+ * @author MOREPOWER
+ *
+ */
 public class ExportImportGraphs {
 
 	/**
@@ -28,7 +32,7 @@ public class ExportImportGraphs {
 		population = gL.loadGraph();
 		
 		File openFile = FileSystem.findOpenPath("export");
-		BasicGraph.exportNewGraph(population, openFile.toString());
+		BasicGraph.exportGraph(population, openFile.toString());
 		
 		Graph<String, String> imported = (new BasicGraph(openFile.toString())).loadGraph();
 		
@@ -48,7 +52,7 @@ public class ExportImportGraphs {
 		population = gL.loadGraph();
 		
 		File openFile = FileSystem.findOpenPath("export");
-		BasicGraph.exportNewGraph(population, openFile.toString());
+		BasicGraph.exportGraph(population, openFile.toString());
 		
 		Graph<String, String> imported = (new BasicGraph(openFile.toString())).loadGraph();
 		

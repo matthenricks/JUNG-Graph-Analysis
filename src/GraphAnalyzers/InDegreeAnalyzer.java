@@ -11,6 +11,11 @@ import java.util.Map;
 import Utils.HardCode;
 import edu.uci.ics.jung.graph.Graph;
 
+/**
+ * Graph Analyzer class for the in-degree
+ * @author MOREPOWER
+ *
+ */
 public class InDegreeAnalyzer extends AnalyzerDistribution {
 	
 	public static String myHeader = "\"userid\",\"inDegree\"";

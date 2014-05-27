@@ -10,7 +10,8 @@ import org.apache.commons.collections15.Factory;
 import edu.uci.ics.jung.graph.Graph;
 
 /**
- * This interface is for all the classes used to generate graphs from all the data sets.
+ * This abstract class is for all the classes used to generate graphs from all the data sets.
+ * 	It includes functionality regarding the naming of the new edges and vertices
  * @author MOREPOWER
  *
  */
@@ -42,7 +43,6 @@ public abstract class GraphLoader {
 	 * @throws IOException 
 	 */
 	public abstract Graph<String, String> loadGraph() throws Error, IOException;
-	// Could use Class<? extends Graph>, but then we'd have to use NewInstance and not be able to add onto existing graphs
 
 	/**
 	 * Getter for important information about the graphLoader

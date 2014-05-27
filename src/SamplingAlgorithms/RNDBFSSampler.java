@@ -15,6 +15,16 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.graph.util.Pair;
 
+/**
+ * Sampling method that can mix properties of a random sampling and a BFS. This is done by a 
+ * step-wise procedure where a random number is compared to a threshold for one or the other.
+ *   Random Sampling is done by selecting a non-sampled node from the population and adding it and it's neighbors
+ *   BFS is done by selecting all possible out-links of all nodes in the sample; pulling a random sample if an island is discovered.
+ * Directionality is taken into account: only out-links will be added for RND and BFS
+ * The function adds nodes in a step-wise queue procedure, so not all neighbors or queued nodes are guaranteed to be added if the sample fills its proportion before the step is over.
+ * @author MOREPOWER
+ *
+ */
 public class RNDBFSSampler implements TargetedSampleMethod {
 	// Alpha is the percentage of the overall graph's vertexes it will fulfill
 	// Threshold is the chance of doing a sampling method vs the other

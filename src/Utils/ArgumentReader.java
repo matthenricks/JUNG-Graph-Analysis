@@ -11,19 +11,26 @@ import GraphCreation.GraphLoader;
 import GraphCreation.VertexTVertexImporter;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
+/**
+ * Class that manages the initial argument handling from the jar being called. This currently supports the following commands
+ * 	--output
+ * 	--load
+ * 	--timeout
+ * 	--pop
+ * @author MOREPOWER
+ *
+ */
 public class ArgumentReader {
 	
 	private static String sOutputHeader = "--output";
 	private static String sGraphLoaderHeader = "--load";
 	private static String sTimeUnitHeader = "--timeout";
-	private static String sCorrelationSampleHeader = "--corrSize";
 	private static String sPopPath = "--pop";
 	
 	public GraphLoader myGraphLoader;
 	public String myOutput;
 	public int myTimeOut;
 	public TimeUnit myTimeOutUnit;
-	public double myCorrelationPercent; // Percent of the population that bounds how much of the sample can be processed
 	public String myPopPath;
 	
 	/***
@@ -34,7 +41,6 @@ public class ArgumentReader {
 		myOutput = Utils.FileSystem.findOpenPath("Test/DefaultOutput/").toString();
 		myTimeOut = 1;
 		myTimeOutUnit = TimeUnit.HOURS;
-		myCorrelationPercent = 1.0;
 		myPopPath = null;
 	}
 
@@ -56,8 +62,6 @@ public class ArgumentReader {
 	 *      <string>
 	 *    --timeout
 	 *      <int of time> <timeunit>
-	 *    --corrSize
-	 *      <corrSize :: double>
 	 *    --sPopPath
 	 *      <path to a folder of all the analysis :: String>
 	 * @param args
@@ -148,16 +152,6 @@ public class ArgumentReader {
 					for (TimeUnit t : TimeUnit.values())
 						System.err.print(t.toString() + ",");
 					return null;
-				}
-			} else if (args[i].equalsIgnoreCase(sCorrelationSampleHeader)) {
-				try {
-					loader.myCorrelationPercent = Double.valueOf(args[++i]);
-					if (loader.myCorrelationPercent > 1 || loader.myCorrelationPercent < 0) {
-						throw new Error("Correlation Percent must be a percentage value");
-					}
-				} catch (Exception e) {
-					System.err.println("The correlation value must be a double constant");
-					e.printStackTrace();
 				}
 			}
 		}

@@ -15,7 +15,7 @@ import edu.uci.ics.jung.io.PajekNetWriter;
 
 
 /**
- * A class that allows for importing and exporting of graphs in the same style as the normal loaders
+ * A class that allows for importing and exporting of any type of graph, using build in JUNG export/import functionality
  * NOTE: The edges of this graph will not match, since vertex and edge ids will not be the same. The value of the vertex and edges will though
  * @author MOREPOWER
  *
@@ -28,8 +28,9 @@ public class BasicGraph extends ImportedGraph {
 		super(path);
 	}
 	
+	@Override
+	// Imports the graph using PajekNetReader
 	public Graph<String, String> loadGraph() throws Error, IOException {
-				
 		BufferedReader reader = new BufferedReader(new FileReader(new File(this.path)));
 		String type = reader.readLine();
 		if (type == null) {
@@ -49,12 +50,10 @@ public class BasicGraph extends ImportedGraph {
 		} else if (EdgeType.valueOf(type) == EdgeType.UNDIRECTED) {
 			PajekNetReader<UndirectedSparseGraph<String, String>, String, String> readerU = new PajekNetReader<UndirectedSparseGraph<String, String>, String, String>(
 					vertexFactory, edgeFactory);
-			
 			UndirectedSparseGraph<String, String> imported = new UndirectedSparseGraph<String, String>();
 			readerU.load(reader, imported);
 			reader.close();
 			return imported;
-			
 		} else {
 			reader.close();
 			throw new Error("Unrecognized edge type");			
@@ -62,7 +61,7 @@ public class BasicGraph extends ImportedGraph {
 	}
 	
 	/**
-	 * Helper to just write the class
+	 * Helper to the exportGraph function
 	 */
 	private static void exportGraph(Graph<String, String> graph, BufferedWriter writer) throws IOException {
 		// First write out what type of graph it is
@@ -87,20 +86,6 @@ public class BasicGraph extends ImportedGraph {
 			exportGraph(graph, writer);
 			writer.close();
 		}
-	}
-	
-	/**
-	 * Exports the data in the graph to the path. Errors if not unique
-	 *    -Edge Type
-	 *    -Pajek Formatted List
-	 * @param graph
-	 * @param location
-	 * @throws IOException 
-	 */
-	public static void exportNewGraph(Graph<String, String> graph, String path) throws IOException {
-		BufferedWriter writer = Utils.FileSystem.createNewFile(path);
-		exportGraph(graph, writer);
-		writer.close();
 	}
 	
 	@Override

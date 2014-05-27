@@ -8,22 +8,25 @@ import java.util.Map;
 import edu.uci.ics.jung.graph.Graph;
 
 /**
- * General interface for an analyzer distribution
- *   Should separate into 3 different functions: calculate, export, and import
- *   Or, should remove and just make a series of static functions in a class
+ * Abstract class for all graph measure analyzers
+ * 	Graph information can be either read or analyzed. A method is included to make that decision based off the 
+ *  availability of the attempted output space for the measure
  * @author MOREPOWER
  *
  */
 public abstract class AnalyzerDistribution {
 
 	/**
-	 * Returns a vertex or edge-based distribution of double values it calculated and exports the analysis
-	 * @throws IOException 
+	 * Analyzes the graph for a specific measure. The measures are outputted to a specified filepath then returned
+	 * @param graph
+	 * @param filepath
+	 * @return a mapping of all the verticies to their measures
+	 * @throws IOException
 	 */
 	public abstract Map<String, Double> analyzeGraph(Graph<String, String> graph, String filepath) throws IOException;
 	
 	/**
-	 * Reads in the analysis of a previously exported version
+	 * Reads in the measure values of a previously exported analysis
 	 * @throws FileNotFoundException 
 	 * @throws Error 
 	 * @throws IOException 
@@ -35,8 +38,7 @@ public abstract class AnalyzerDistribution {
 //			try {
 				return read(filepath);
 //			} catch (Exception e) {
-//				// Delete the file already there
-//				// TODO: File needs to be deleted
+		// TODO: Could make it so it will overwrite the file, but this is unsafe
 //				return analyzeGraph(graph, filepath);
 //			}
 		else
@@ -44,7 +46,7 @@ public abstract class AnalyzerDistribution {
 	}
 	
 	/**
-	 * Returns identifying information for the method
+	 * Returns the name of the type of analysis
 	 */
 	public abstract String getName();
 	

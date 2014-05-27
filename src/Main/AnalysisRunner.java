@@ -23,8 +23,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import Correlation.KolmogorovSmirnovTest;
-import Correlation.MeasureComparison;
 import GraphAnalyzers.AnalyzerDistribution;
 import GraphAnalyzers.BCAnalyzer;
 import GraphAnalyzers.EDAnalyzer;
@@ -177,12 +175,7 @@ public class AnalysisRunner {
 		
 		// Get the WCC of this graph so that we better understand it's density
 		tracker.startTracking("WCC calculation of " + jobName);
-		Integer WCC = -1;
-		if ((new File(outputDir + HardCode.pWccPostfix)).exists()) {
-			WCC = (int)Math.floor((new WCCSizeAnalysis()).read(outputDir + HardCode.pWccPostfix).get("Total WCC Clusters"));
-		} else {
-			WCC = (int)Math.floor((new WCCSizeAnalysis()).analyzeGraph(graph, outputDir + HardCode.pWccPostfix).get("Total WCC Clusters"));
-		}
+		Integer WCC = (new WCCSizeAnalysis()).computeOrProcess(graph, outputDir + HardCode.pWccPostfix).keySet().size();
 		tracker.endTracking("WCC calculation of " + jobName);
 		return new CSV_Builder(WCC);
 	}
@@ -282,7 +275,7 @@ public class AnalysisRunner {
 					sampleTracker.endTracking("Initial sampling of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
 
 					// Output the graph since it hasn't been exported yet
-					BasicGraph.exportNewGraph(sample, aFolder + HardCode.pDataFix);
+					BasicGraph.exportGraph(sample, aFolder + HardCode.pDataFix);
 				}
 				
 				/** Now begin the analysis **/
@@ -319,28 +312,23 @@ public class AnalysisRunner {
 					if (analyzer.getValue() instanceof BCAnalyzer) {
 						bcVal = sampleValue;
 						
-						cDur.LinkToEnd(MeasureComparison.compare(populationBC, sampleValue));
-						double[] badValues = {};
-						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationBC, sampleValue, badValues)); // [KS, KS adj]
+						cDur.LinkToEnd(MeasureComparison.compare(populationBC, sampleValue)); // [correlation, PR]
+						cDur.LinkToEnd(MeasureComparison.KSCompare(populationBC, sampleValue)); // [KS]
 					} else if (analyzer.getValue() instanceof InDegreeAnalyzer) {
 						ideVal = sampleValue;
 
-						cDur.LinkToEnd(MeasureComparison.compare(populationInDegree, sampleValue));
-						double[] badValues = {};
-						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationInDegree, sampleValue, badValues)); // [KS, KS adj]
+						cDur.LinkToEnd(MeasureComparison.compare(populationInDegree, sampleValue)); // [correlation, PR]
+						cDur.LinkToEnd(MeasureComparison.KSCompare(populationInDegree, sampleValue)); // [KS]
 					} else if (analyzer.getValue() instanceof OutDegreeAnalyzer) {
 						odeVal = sampleValue;
 
-						cDur.LinkToEnd(MeasureComparison.compare(populationOutDegree, sampleValue));
-						// ROSO: Remove bad values
-						double[] badValues = {};
-						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationOutDegree, sampleValue, badValues)); // [KS, KS adj]
+						cDur.LinkToEnd(MeasureComparison.compare(populationOutDegree, sampleValue)); // [correlation, PR]
+						cDur.LinkToEnd(MeasureComparison.KSCompare(populationOutDegree, sampleValue)); // [KS]
 					} else {
 						edVal = sampleValue;
 
-						cDur.LinkToEnd(MeasureComparison.compare(populationED, sampleValue));
-						double[] badValues = {0};
-						cDur.LinkToEnd(KolmogorovSmirnovTest.runTest(populationED, sampleValue, badValues)); // [KS, KS adj]
+						cDur.LinkToEnd(MeasureComparison.compare(populationED, sampleValue)); // [correlation, PR]
+						cDur.LinkToEnd(MeasureComparison.KSCompare(populationED, sampleValue)); // [KS]
 					}
 					
 					// Connect the CSV to the duration

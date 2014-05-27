@@ -1,5 +1,11 @@
 package Utils;
 
+/**
+ * A class that holds a series of objects for formatting purposes within the CSV_Builder implementation
+ * 	Overriding the toString() method of an object will override how a CSV_Builder will print
+ * @author MOREPOWER
+ *
+ */
 public class CSV_Builder_Objects {
 	/**
 	 * Nested class to help correctly format doubles for CSVs

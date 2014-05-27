@@ -17,14 +17,16 @@ import GraphCreation.GraphLoader;
 import SamplingAlgorithms.RNDBFSSampler;
 import SamplingAlgorithms.RNDBFSSingleSampler;
 import SamplingAlgorithms.RNDForestFirePaperSampler;
-import SamplingAlgorithms.RNDForestFireSampler;
-import SamplingAlgorithms.RNDWalkSampler;
 import SamplingAlgorithms.SampleMethod;
 import Utils.FileSystem;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
-
+/**
+ * A series of tests to test graph analyzers
+ * @author MOREPOWER
+ *
+ */
 public class SampleGraphs {
 
 	/**
@@ -53,7 +55,6 @@ public class SampleGraphs {
 	}
 	
 	
-// Edges aren't taken... Won't work
 //	@Test
 //	public void TestRndWalkSample() throws IOException, Error {
 //		Graph<String, String> population;

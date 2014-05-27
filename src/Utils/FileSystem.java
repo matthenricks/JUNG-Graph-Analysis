@@ -5,6 +5,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Class to manage custom functions related to interacting with the FileSystem
+ * @author MOREPOWER
+ *
+ */
 public class FileSystem {
 	
 	/**

@@ -12,11 +12,17 @@ import Utils.HardCode;
 import edu.uci.ics.jung.algorithms.metrics.Metrics;
 import edu.uci.ics.jung.graph.Graph;
 
+/**
+ * Graph Analyzer for Egocentric Density, or Local Clustering Coefficient.
+ * @author MOREPOWER
+ *
+ */
 public class EDAnalyzer extends AnalyzerDistribution {
 	
+	// The header for the csv
 	final static String myHeader = "\"userid\",\"edScore\"";
-
-	// the amount of sig figs the data will be kept to
+	
+	// the amount of sig figs. Since this is an approximation, there is a level of randomness, this can remove
 	final static int sigFigs = 7;
 	
 	@Override

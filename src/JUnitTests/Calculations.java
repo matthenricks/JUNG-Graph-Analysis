@@ -8,13 +8,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.junit.Test;
 
-import Correlation.KolmogorovSmirnovTest;
+import DataAnalyzers.KolmogorovSmirnovTest;
 import GraphAnalyzers.BCAnalyzer;
-import GraphAnalyzers.EDAnalyzer;
 import GraphAnalyzers.InDegreeAnalyzer;
 import GraphAnalyzers.OutDegreeAnalyzer;
 import GraphCreation.BarabasiAlbertGraphGenerator;
@@ -27,27 +25,13 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
+/**
+ * Tests some of the functionality involving calculations.
+ * @author MOREPOWER
+ *
+ */
 public class Calculations {
 
-	@Test
-	public void testBC() throws IOException {
-		DirectedSparseGraph<String, String> dGraph = new DirectedSparseGraph<String, String>();
-		dGraph.addVertex("A");
-		dGraph.addVertex("B");
-		dGraph.addVertex("C");
-		dGraph.addVertex("D");
-		
-		// a <- c -> b. 
-
-		dGraph.addEdge("e1", "C", "A");
-		dGraph.addEdge("e2", "B", "C");
-		dGraph.addEdge("e3", "B", "A");
-		
-		Map<String, Double> ret = (new EDAnalyzer()).analyzeGraph(dGraph, "ed1.csv");
-		for (Entry<String, Double> entry : ret.entrySet())
-			System.out.println(entry.getKey().toString() + ": " + entry.getValue());
-	}
-	
 	@Test
 	public void degreeDirectedTest() throws IOException {
 		DirectedSparseGraph<String, String> dGraph = new DirectedSparseGraph<String, String>();
@@ -59,12 +43,12 @@ public class Calculations {
 		dGraph.addEdge("e2", "B", "A");
 		dGraph.addEdge("e3", "C", "B");
 		
-		Map<String, Double> ret = (new InDegreeAnalyzer()).analyzeGraph(dGraph, "in2.csv");
+		Map<String, Double> ret = (new InDegreeAnalyzer()).analyzeGraph(dGraph, FileSystem.findOpenPath("in.csv").toString());
 		assert(ret.get("A") == 1.0);
 		assert(ret.get("B") == 2.0);
 		assert(ret.get("C") == 0.0);
 
-		ret = (new OutDegreeAnalyzer()).analyzeGraph(dGraph, "out2.csv");
+		ret = (new OutDegreeAnalyzer()).analyzeGraph(dGraph, FileSystem.findOpenPath("out.csv").toString());
 		assert(ret.get("A") == 1.0);
 		assert(ret.get("B") == 1.0);
 		assert(ret.get("C") == 1.0);
@@ -81,14 +65,12 @@ public class Calculations {
 		dGraph.addEdge("e2", "B", "A");
 		dGraph.addEdge("e3", "C", "B");
 		
-		Map<String, Double> ret = (new InDegreeAnalyzer()).analyzeGraph(dGraph, "in1.csv");
+		Map<String, Double> ret = (new InDegreeAnalyzer()).analyzeGraph(dGraph, FileSystem.findOpenPath("in.csv").toString());
 		assert(ret.get("A") == 1.0);
 		assert(ret.get("B") == 2.0);
 		assert(ret.get("C") == 1.0);
 
-		ret = (new OutDegreeAnalyzer()).analyzeGraph(dGraph, "out1.csv");
-		assert(ret.get("A") == 1.0);
-		assert(ret.get("B") == 2.0);
+		ret = (new OutDegreeAnalyzer()).analyzeGraph(dGraph, FileSystem.findOpenPath("out.csv").toString());
 		assert(ret.get("C") == 1.0);
 	}
 	

@@ -10,23 +10,35 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**
- * Class for importing graphs that are composed of lists of vertexes to other vertexes
+ * Class for importing graphs that are composed of edges separated by a split. 
+ * The default split is a tab. The default ignore for a line is #
+ * Supports both Directed and Undirected graphs
  * @author iosbomb
  *
  */
 public class VertexTVertexImporter extends ImportedGraph {
 
-	final String myIgnore = "#";
-	
+	String myIgnore = "#";
 	String mySplit = "\t";
 	EdgeType edgeType;
-	
+
 	public VertexTVertexImporter(String path, EdgeType edgeType, String split) {
 		super(path);
 		this.edgeType = edgeType;
 		this.mySplit = split;
 	}
 	
+	public VertexTVertexImporter(String path, EdgeType edgeType, String split, String ignore) {
+		super(path);
+		this.edgeType = edgeType;
+		this.mySplit = split;
+		this.myIgnore = ignore;
+	}
+	
+	/**
+	 * Helper class to decide on whether or not a Directed or Undirected graph is being created
+	 * @return the graph type that is being created
+	 */
 	protected Graph<String, String> generateGraph() {
 		if (edgeType.equals(EdgeType.DIRECTED))
 			return new DirectedSparseGraph<String, String>();

@@ -32,6 +32,7 @@ public class CSV_Builder extends Object {
 	
 	/**
 	 * Links the CSV_Builder to the end of the current one. Will make a permutation of all values on end
+	 * 	Note: be weary of stack-overflows
 	 * @param next
 	 * @return
 	 */

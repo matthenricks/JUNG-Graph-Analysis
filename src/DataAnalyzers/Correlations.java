@@ -1,14 +1,18 @@
-package Correlation;
+package DataAnalyzers;
 
 import java.util.Arrays;
 import java.util.Comparator;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
-import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
-import org.apache.commons.math3.stat.correlation.SpearmansCorrelation;
 import org.apache.commons.math3.util.FastMath;
 import org.apache.commons.math3.util.Pair;
 
+/**
+ * Class that holds the wrappers used for Pearsons, Error, and Spearmans Correlation.
+ * Note, custom methods were created due to errors existent in JSC
+ * @author MOREPOWER
+ *
+ */
 public class Correlations {
 	
 	/**
@@ -130,28 +134,14 @@ public class Correlations {
 	
 	
 	/**
-	 * Takes in a population and sample array and computes the pearson correlation.
-	 * @param popBC - a list of all the pop in question
-	 * @param sampleBCs - a list of all the sample in question
-	 * @return a list of correlation values for each sample to the population
+	 * Pearson's Correlation with a degenerate handling scheme. Both series must be the same length
+	 *   If both series are degenerate and have the same mean, return 1, else return 0
+	 *   If one series is degenerate and the other isn't, return Double.NaN
+	 * @param series1 - the first series of data
+	 * @param series2 - the second series of data
+	 * @return the pearsons correlation between the series
 	 */
 	public static double pearsonsCorrelation(double[] series1, double[] series2) {
-		// Now process the values and generate the correlation
-		if (series1.length < 2 || series2.length < 2)
-			return Double.NaN;
-		
-		PearsonsCorrelation scr = new PearsonsCorrelation();
-		
-		return scr.correlation(series1, series2);
-	}
-	
-	/**
-	 * Pearson's Correlation with a degenerate handling scheme
-	 * @param series1
-	 * @param series2
-	 * @return
-	 */
-	public static double pearsonsCustomCorrelation(double[] series1, double[] series2) {
 		if (series1.length != series2.length)
 			return Double.NaN;
 		
@@ -202,12 +192,14 @@ public class Correlations {
 	}
 	
 	/**
-	 * Spearmans Rank Correlation with a degenerate case handling mechanism
-	 * @param series1
-	 * @param series2
-	 * @return
+	 * Spearmans Rank Correlation with a degenerate handling scheme. Both series must be the same length
+	 *   If both series are degenerate and have the same mean, return 1, else return 0
+	 *   If one series is degenerate and the other isn't, return Double.NaN
+	 * @param series1 - the first series of data
+	 * @param series2 - the second series of data
+	 * @return the spearman's rank correlation between the series
 	 */
-	public static double spearmansCustomCorrelation(double[] series1, double[] series2) {
+	public static double spearmansCorrelation(double[] series1, double[] series2) {
 		if (series1.length != series2.length)
 			return Double.NaN;
 		
@@ -257,34 +249,23 @@ public class Correlations {
 		return nominator / Math.pow(var1*var2, 0.5);		
 	}
 	
-	/**
-	 * Takes in a population and sample array and computes the various correlations.
-	 * @param popBC - a list of all the pop in question
-	 * @param sampleBCs - a list of all the sample in question
-	 * @return a list of correlation values for each sample to the population
-	 */
-	public static double spearmansCorrelation(double[] series1, double[] series2) {
-		// Now process the values and generate the correlation
-		if (series1.length < 2 || series2.length < 2)
-			return Double.NaN;
-		
-		SpearmansCorrelation scr = new SpearmansCorrelation();
-		
-		return scr.correlation(series1, series2);
-	}
 	
 	/**
-	 * Calculates the average error of series
-	 * @param trueSeries
-	 * @param sampleSeries
-	 * @return
+	 * Calculates the average error of series in Euclidean distance.
+	 *   Note: Both series must be of the same length and not be 0, or Double.NaN is returned
+	 * @param trueSeries - the actual data
+	 * @param sampleSeries - the predicted data
+	 * @return the average error
 	 */
 	public static double errorCalculation(double[] trueSeries, double[] sampleSeries) {
-		double error = 0.0;
-		for (int i = 0; i < trueSeries.length; i++) {
-			error += Math.pow(trueSeries[i] - sampleSeries[i], 2);
-		}
-		return (Math.sqrt(error))/trueSeries.length;
+		if (trueSeries.length == sampleSeries.length && trueSeries.length > 0) {
+			double error = 0.0;
+			for (int i = 0; i < trueSeries.length; i++) {
+				error += Math.pow(trueSeries[i] - sampleSeries[i], 2);
+			}
+			return (Math.sqrt(error))/trueSeries.length;
+		} else
+			return Double.NaN;
 	}
 	
 }

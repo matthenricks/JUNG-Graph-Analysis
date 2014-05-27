@@ -13,8 +13,17 @@ import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
-import edu.uci.ics.jung.graph.util.Pair;
 
+/**
+ * Sampler that operates off of a random walk or random sample, or a mixture of the two.
+ *   Random: randomly selects an un-sampled node and sets the current node to it.
+ *   Walk: randomly selects a neighbor of the current node, explores it and adds the edge. If more than 
+ *   rerunMax steps occur before a node is added, a random node that hasn't been added is selected
+ *   
+ * This will always start with random, then choose between a walk or random based off the threshold
+ * @author MOREPOWER
+ *
+ */
 public class RNDWalkSampler implements TargetedSampleMethod {
 	// Alpha is the percentage of the overall graph's vertexes it will fulfill
 	// Threshold is the chance of doing a sampling method vs the other

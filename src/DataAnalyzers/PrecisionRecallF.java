@@ -1,25 +1,14 @@
-package Correlation;
+package DataAnalyzers;
 
-import java.util.HashSet;
+import java.util.Set;
 
-import Utils.CSV_Builder;
-import Utils.CSV_Builder_Objects;
-
+/**
+ * Class that contains custom precision, recall, and F-Measure functions
+ * 
+ * @author MOREPOWER
+ *
+ */
 public class PrecisionRecallF {
-	
-	// TODO: Could enhance efficiency by first sorting both arrays, then finding the intersection and dividing by each individually
-	
-	/**
-	 * Calculate the precision and recall
-	 * @param population
-	 * @param sample
-	 * @return a CSV Builder of composition: [Precision, Recall]
-	 */
-	public static CSV_Builder PR(HashSet<String> reference, HashSet<String> test) {
-		return new CSV_Builder(new CSV_Builder_Objects.CSV_Double(precision(reference, test)), 
-					new CSV_Builder(new CSV_Builder_Objects.CSV_Double(recall(reference, test)))
-				);
-	}
 	
 	/**
 	 * Given a set of reference values and a set of test values, return the fraction of test values that appear in the reference set. 
@@ -28,7 +17,7 @@ public class PrecisionRecallF {
 	 * @param sample
 	 * @return
 	 */
-	public static double precision(HashSet<String> reference, HashSet<String> test) {
+	public static double Precision(Set<String> reference, Set<String> test) {
 		int common = 0;
 		for (String entry : test) {
 			if (reference.contains(entry))
@@ -44,7 +33,7 @@ public class PrecisionRecallF {
 	 * @param test
 	 * @return
 	 */
-	public static double recall(HashSet<String> reference, HashSet<String> test) {
+	public static double Recall(Set<String> reference, Set<String> test) {
 		int common = 0;
 		for (String entry : reference) {
 			if (test.contains(entry))
@@ -54,13 +43,16 @@ public class PrecisionRecallF {
 	}
 	
 	/**
-	 * Calculates the F based off the precision and recall values
+	 * Calculates the F-Measure based off the precision and recall values with a weight.
+	 * The weight is a ratio that increases or decreases the importance of precision.
+	 *   A formal equation can be found on Wikipedia: http://en.wikipedia.org/wiki/Precision_and_recall
+	 * Note: This function is unsafe for precision/recall values of 0 and for alpha <= 0
 	 * @param precision
 	 * @param recall
 	 * @param alpha
-	 * @return
+	 * @return the F-Measure
 	 */
-	public static double F(double precision, double recall, double alpha) {
+	public static double FMeasure(double precision, double recall, double alpha) {
 		return 1/(alpha/precision + (1-alpha)/recall);
 	}
 }

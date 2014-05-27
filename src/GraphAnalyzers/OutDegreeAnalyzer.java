@@ -11,6 +11,11 @@ import java.util.Map;
 import Utils.HardCode;
 import edu.uci.ics.jung.graph.Graph;
 
+/**
+ * Graph Analyzer for the out-degree.
+ * @author MOREPOWER
+ *
+ */
 public class OutDegreeAnalyzer extends AnalyzerDistribution {
 	
 	public static String myHeader = "\"userid\",\"outDegree\"";
@@ -71,6 +76,6 @@ public class OutDegreeAnalyzer extends AnalyzerDistribution {
 
 	@Override
 	public String getName() {
-		return "OutDegree Distribution";
+		return "Out Degree Distribution";
 	}
 }

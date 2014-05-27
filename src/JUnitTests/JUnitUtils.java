@@ -10,6 +10,11 @@ import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 import edu.uci.ics.jung.graph.util.Pair;
 
+/**
+ * Utils used in JUnit tests only
+ * @author MOREPOWER
+ *
+ */
 public class JUnitUtils {
 		
 	/**

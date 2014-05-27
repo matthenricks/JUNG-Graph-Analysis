@@ -1,7 +1,6 @@
-package SamplingAlgorithms;
+package Unimplemented;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -14,9 +13,11 @@ import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
-import edu.uci.ics.jung.graph.util.Pair;
 
 /**
+ * UNUSED FOREST FIRE SAMPLER. KEPT FOR POTENTIAL USE PURPOSES
+ * 
+ * 
  * Forest Fire (FF): FF is a randomized version of BFS, where for every neighbor v 
  * of the current node, we flip a coin, with probability of success p, to decide if we explore v. 
  * FF reduces to BFS for p = 1. It is possible that this process dies out before it covers all nodes. 
@@ -34,7 +35,7 @@ import edu.uci.ics.jung.graph.util.Pair;
  * @author iosbomb
  *
  */
-public class RNDForestFireSampler implements TargetedSampleMethod {
+public class RNDForestFireSampler implements SamplingAlgorithms.TargetedSampleMethod {
 	// Alpha is the percentage of the overall graph's vertexes it will fulfill
 	// Threshold is the chance of doing a sampling method vs the other
 	protected double alpha, forest_rnd;

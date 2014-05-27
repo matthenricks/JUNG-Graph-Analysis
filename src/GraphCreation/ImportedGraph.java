@@ -2,6 +2,11 @@ package GraphCreation;
 
 import java.io.File;
 
+/**
+ * Abstraction on a normal graph loader that the path is a graph already exists
+ * @author MOREPOWER
+ *
+ */
 public abstract class ImportedGraph extends GraphLoader {
 
 	protected String path;

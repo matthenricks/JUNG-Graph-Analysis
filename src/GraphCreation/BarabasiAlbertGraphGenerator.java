@@ -12,8 +12,8 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**
- * Implementation of the BarabasiAlbert Graph Generator
- * Evolving scale-free random graph generator. At each time step, a new vertex is created and is connected to existing 
+ * Graph Generator using the BarabasiAlbert model. Wrapped from JUNG. Supports both UNDIRECTED and DIRECTED graphs
+ * BarabasiAlbert is an evolving scale-free random graph generator. At each time step, a new vertex is created and is connected to existing 
  * vertices according to the principle of "preferential attachment", whereby vertices with higher degree have a higher probability of being selected for attachment
  * @author MOREPOWER
  *

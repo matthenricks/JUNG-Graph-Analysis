@@ -10,8 +10,8 @@ import edu.uci.ics.jung.graph.UndirectedGraph;
 import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 
 /**
- * Generates a random graph using the Erdos-Renyi binomial model (each pair of vertices is connected with probability p)
- * This is not directed
+ * Graph Generator that creates a random graph using the Erdos-Renyi binomial model (each pair of vertices is connected with probability p)
+ * This does not support DIRECTED graphs and wraps the JUNG ErdosRenyiGenerator Functionality
  * @author MOREPOWER
  *
  */

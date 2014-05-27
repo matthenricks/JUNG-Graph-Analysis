@@ -8,13 +8,12 @@ import java.util.LinkedHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Class to track various important statistics throughout the program
+ * Class to track the timing of events throughout the program
  * Note: A job must be finished before another job is added on
  * @author MOREPOWER
  *
  */
 public class JobTracker {
-	
 	// TODO: Make it so we can consolidate jobs into other jobs and import JobTrackers into each other
 	
 	final int SecondToNano = 1000000000;

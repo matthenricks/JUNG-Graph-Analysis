@@ -7,6 +7,16 @@ import java.util.Iterator;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
+/**
+ * Sampling method that can mix properties of a random sampling and a BFS. This is done by a 
+ * step-wise procedure where a random number is compared to a threshold for one or the other.
+ *   Random Sampling is done by selecting a non-sampled node from the population and adding it and it's neighbors
+ *   BFS is done by selecting all possible out-links of ONE node in the sample randomly. The neighbors and itself are then added
+ * Directionality is taken into account: only out-links will be added for RND and BFS
+ * The function adds nodes in a step-wise queue procedure, so not all neighbors or queued nodes are guaranteed to be added if the sample fills its proportion before the step is over.
+ * @author MOREPOWER
+ *
+ */
 public class RNDBFSSingleSampler extends RNDBFSSampler {
 	
 	public RNDBFSSingleSampler(double alpha, double bfs_rnd, int seed, EdgeType type) {

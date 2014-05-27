@@ -11,8 +11,8 @@ import edu.uci.ics.jung.graph.UndirectedSparseGraph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**
- * The purpose of this class is to be able import in the Twitter data and convert it to a JUNG graph.
- * The graph should be able to be directed or undirected. Initially, it should be directed (since undirected can be derived)
+ * The purpose of this class is to be able import in the Twitter data (friends.csv) and convert it to a JUNG graph.
+ * The graph is able to be specified as Directed or Undirected
  * @author MOREPOWER
  *
  */

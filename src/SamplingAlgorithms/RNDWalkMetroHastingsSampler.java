@@ -8,6 +8,15 @@ import java.util.Random;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.util.EdgeType;
 
+/**
+ * Sampler implementing the metro-hastings version of the walk method as well as the Random sampling for mixing.
+ * Metro-Hastings biases the random walk to explore less degree-centric nodes.
+ * Random sampling only selects one node that's currently unselected and adds no connections.
+ * Connections are added based off where the walk goes, making a full graph sampling able to include only a proportion of the connections
+ * 
+ * @author MOREPOWER
+ *
+ */
 public class RNDWalkMetroHastingsSampler extends RNDWalkSampler {
 	
 	public RNDWalkMetroHastingsSampler(double alpha, double walk_rnd, int seed, EdgeType type) {
@@ -32,9 +41,10 @@ public class RNDWalkMetroHastingsSampler extends RNDWalkSampler {
 	}
 	
 	/**
-	 * Takes in a group of objects with an attached percentage, then returns the selected one	
-	 * @param group
-	 * @return
+	 * Takes in a group of objects with an attached percentage, then returns the a selected value based based off the probabilities.
+	 * This only gives the items the percent they were given and only works for cumulative percentages less than 100%. No negatives either.
+	 * @param group  
+	 * @return null if none were chosen, or the grouping that was
 	 */
 	private PercentageGroup<String> pickPercent(LinkedList<PercentageGroup<String>> group) {
 		double selection = (new Random()).nextDouble();
