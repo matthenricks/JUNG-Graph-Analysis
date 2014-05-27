@@ -8,11 +8,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.junit.Test;
 
 import Correlation.KolmogorovSmirnovTest;
 import GraphAnalyzers.BCAnalyzer;
+import GraphAnalyzers.EDAnalyzer;
 import GraphAnalyzers.InDegreeAnalyzer;
 import GraphAnalyzers.OutDegreeAnalyzer;
 import GraphCreation.BarabasiAlbertGraphGenerator;
@@ -27,7 +29,25 @@ import edu.uci.ics.jung.graph.util.EdgeType;
 
 public class Calculations {
 
-	// TODO: Try all of the In/OutDegree
+	@Test
+	public void testBC() throws IOException {
+		DirectedSparseGraph<String, String> dGraph = new DirectedSparseGraph<String, String>();
+		dGraph.addVertex("A");
+		dGraph.addVertex("B");
+		dGraph.addVertex("C");
+		dGraph.addVertex("D");
+		
+		// a <- c -> b. 
+
+		dGraph.addEdge("e1", "C", "A");
+		dGraph.addEdge("e2", "B", "C");
+		dGraph.addEdge("e3", "B", "A");
+		
+		Map<String, Double> ret = (new EDAnalyzer()).analyzeGraph(dGraph, "ed1.csv");
+		for (Entry<String, Double> entry : ret.entrySet())
+			System.out.println(entry.getKey().toString() + ": " + entry.getValue());
+	}
+	
 	@Test
 	public void degreeDirectedTest() throws IOException {
 		DirectedSparseGraph<String, String> dGraph = new DirectedSparseGraph<String, String>();
