@@ -2,6 +2,8 @@ package DataAnalyzers;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.SortedSet;
+import java.util.TreeMap;
 
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.util.FastMath;
@@ -137,8 +139,8 @@ public class Correlations {
 	 * Pearson's Correlation with a degenerate handling scheme. Both series must be the same length
 	 *   If both series are degenerate and have the same mean, return 1, else return 0
 	 *   If one series is degenerate and the other isn't, return Double.NaN
-	 * @param series1 - the first series of data
-	 * @param series2 - the second series of data
+	 * @param series1 - the first series of data. 
+	 * @param series2 - the second series of data. 
 	 * @return the pearsons correlation between the series
 	 */
 	public static double pearsonsCorrelation(double[] series1, double[] series2) {
@@ -192,35 +194,75 @@ public class Correlations {
 	}
 	
 	/**
+	 * Ranking algorithm, a tolerance of 0.0001 is used
+	 * @param values
+	 * @return
+	 */
+	private static double[] Rank(double[] values)
+	{
+		final double tolerance = 0.0001;
+		
+		double[] sortedList = Arrays.copyOf(values, values.length);
+		Arrays.sort(sortedList);
+		
+		double[] ranks = new double[values.length];
+		for (int i = 0; i < values.length; i++) {
+			int index = Arrays.binarySearch(sortedList, values[i]);
+			// Check around to see how many numbers are around the ranking
+			double num = sortedList[index];
+			// Iterate back till it changes
+			int j = 1;
+			for (; j <= index && Math.abs(sortedList[index - j] - num) < tolerance; j++);
+			// Iterate forward till it changes
+			int k = index + 1;
+			for (; k < sortedList.length && Math.abs(sortedList[k] - num) < tolerance; k++);
+			
+			// Place the real rank in ranks
+			ranks[i] = index - j + k + 2;
+			ranks[i] /= 2.0;
+		}
+
+		return ranks;
+	}
+	
+	/**
 	 * Spearmans Rank Correlation with a degenerate handling scheme. Both series must be the same length
 	 *   If both series are degenerate and have the same mean, return 1, else return 0
 	 *   If one series is degenerate and the other isn't, return Double.NaN
-	 * @param series1 - the first series of data
-	 * @param series2 - the second series of data
+	 *   This always assumes duplicate values ***
+	 * @param series1 - the first series of data. The series needs to correspond with series2.
+	 * @param series2 - the second series of data. This must correspond to the first series.
 	 * @return the spearman's rank correlation between the series
 	 */
 	public static double spearmansCorrelation(double[] series1, double[] series2) {
+		
 		if (series1.length != series2.length)
 			return Double.NaN;
+		
+		/** Included ranking algorithm **/
+		double[] rank1 = Rank(series1);
+		double[] rank2 = Rank(series2);	
+			
+		/** Now run the spearman's correlation on the algorithm **/
 		
 		// Do each in 3 passes
 		double mean1 = 0, mean2 = 0;
 
 		// Calculate the means
-		for (int i = 0; i < series1.length; i++) {
-			mean1 += series1[i];
-			mean2 += series2[i];
+		for (int i = 0; i < rank1.length; i++) {
+			mean1 += rank1[i];
+			mean2 += rank2[i];
 		}
-		mean1 /= series1.length;
-		mean2 /= series2.length;
+		mean1 /= rank1.length;
+		mean2 /= rank2.length;
 		
 		// Calculate the values
 		double nominator = 0;
 		double var1 = 0;
 		double var2 = 0;
 		for (int i = 0; i < series1.length; i++) {
-			double diff1 = series1[i] - mean1;
-			double diff2 = series2[i] - mean2;
+			double diff1 = rank1[i] - mean1;
+			double diff2 = rank2[i] - mean2;
 			nominator += diff1*diff2;
 			var1 += Math.pow(diff1, 2);
 			var2 += Math.pow(diff2, 2);

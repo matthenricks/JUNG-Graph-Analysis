@@ -11,6 +11,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
+import DataAnalyzers.Correlations;
 import DataAnalyzers.KolmogorovSmirnovTest;
 import GraphAnalyzers.BCAnalyzer;
 import GraphAnalyzers.InDegreeAnalyzer;
@@ -32,6 +33,14 @@ import edu.uci.ics.jung.graph.util.EdgeType;
  */
 public class Calculations {
 
+	@Test
+	public void testSpearmans() throws IOException {
+		double[] d = {0.1, 0.5, 0.5};
+		double[] d2 = {0.1, 0.4, 0.4};
+		assert(Correlations.spearmansCorrelation(d, d2) == 1.0);
+	}
+	
+	
 	@Test
 	public void degreeDirectedTest() throws IOException {
 		DirectedSparseGraph<String, String> dGraph = new DirectedSparseGraph<String, String>();

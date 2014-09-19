@@ -127,7 +127,7 @@ public class AnalysisRunner {
 	// Make this entire thing an alpha loop
 	static final double[] alphaArea = {
 			0.01, 0.02, 0.03, 0.04, 0.05, 
-			0.08, 0.1
+			0.08, 0.1, 0.2
 	};
 	
 	/**
@@ -815,6 +815,7 @@ public class AnalysisRunner {
 
 		/** Random Forest Sampling **/
 		// Begin the sampling!
+		/*
 		testName = "ForestFire";
 		test = new CSV_Builder(testName);
 		mFolder = sampleOverallDir + testName;
@@ -868,7 +869,7 @@ public class AnalysisRunner {
 				tasks.clear();	
 			}
 		}
-		
+
 		// Lastly add the sample type used and the overall graph information
 		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
 				new CSV_Builder(graph.getEdgeCount(), // parent edge count
@@ -883,7 +884,8 @@ public class AnalysisRunner {
 		csvOutput.newLine();
 		mainData.writeCSV(csvOutput);
 		csvOutput.close();
-		
+		*/
+
 		// Stop all the threads
 		stopAllThreads();
 		
