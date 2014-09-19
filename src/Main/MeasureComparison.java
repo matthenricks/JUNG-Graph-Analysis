@@ -46,6 +46,21 @@ public class MeasureComparison {
 	};
 	
 	/**
+	 * Comparator to sort the entries in the Hashmaps
+	 */
+	public static Comparator<Entry<String, Double>> entrySortBackwards = new Comparator<Entry<String,Double>>() {
+		@Override
+		public int compare(Entry<String, Double> arg0, Entry<String, Double> arg1) {
+			int initComp = arg0.getValue().compareTo(arg1.getValue());
+			if (initComp == 0) {
+				return arg0.getKey().compareTo(arg1.getKey());
+			} else {
+				return initComp;
+			}
+		}
+	};
+	
+	/**
 	 * Main comparing function that compares the population to the sample. First, all values are pulled and sorted;
 	 * then, spearmans, pearsons, error, precision, and recall are computed.
 	 * @param population - the mapping of the population values
@@ -63,6 +78,38 @@ public class MeasureComparison {
 		Collections.sort(populationValues, entrySort);
 		Collections.sort(sampleValues, entrySort);
 		
+		// Run the analyses
+		List<CSV_Builder> cCorr = correlationCompare(population, sampleValues);
+		for (CSV_Builder csv : cCorr) {
+			if (!csv.LinkToEnd(PRCompare(populationValues, sampleValues)))
+				throw new Error("PR Compare CSV Adding Failed");
+		}
+		
+		return cCorr;
+	}
+
+	
+	 /* Main comparing function that compares the population to the sample. First, all values are pulled and sorted;
+	 * then, spearmans, pearsons, error, precision, and recall are computed.
+	 * @param population - the mapping of the population values
+	 * @param sample - the mapping of the sample values
+	 * @returns a CSV_Builder storing: 
+	 *   Correlation: [alpha, spearmans, pearsons, error]
+	 *   P/R: [pop-alpha, sam-alpha, precision, recall]
+	 */
+	public static List<CSV_Builder> compare(Map<String, Double> population, Map<String, Double> sample, boolean reverseSort) {
+		
+		// Pull the hashmaps into a sortable structure
+		ArrayList<Entry<String, Double>> populationValues = new ArrayList<Entry<String, Double>>(population.entrySet());
+		ArrayList<Entry<String, Double>> sampleValues = new ArrayList<Entry<String, Double>>(sample.entrySet());
+		// Sort the sample and population
+		if (!reverseSort) {
+			Collections.sort(populationValues, entrySort);
+			Collections.sort(sampleValues, entrySort);
+		} else {
+			Collections.sort(populationValues, entrySortBackwards);
+			Collections.sort(sampleValues, entrySortBackwards);
+		}
 		// Run the analyses
 		List<CSV_Builder> cCorr = correlationCompare(population, sampleValues);
 		for (CSV_Builder csv : cCorr) {

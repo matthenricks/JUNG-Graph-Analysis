@@ -300,7 +300,7 @@ public class AnalysisRunner {
 				
 				// Run all of the analyzers
 				for (Entry<String, AnalyzerDistribution> analyzer : analyzers.entrySet()) {
-					// Find and process the BC of the graph
+					// Find and process the analyzer of the graph
 					sampleTracker.startTracking(analyzer.getValue().getName() + " of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
 					HashMap<String, Double> sampleValue = new HashMap<String, Double>(analyzer.getValue().computeOrProcess(sample, aFolder + analyzer.getKey()));
 					sampleTracker.endTracking(analyzer.getValue().getName() + " of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000));
@@ -309,6 +309,7 @@ public class AnalysisRunner {
 					CSV_Builder cDur = new CSV_Builder(sampleTracker.getJobTime(analyzer.getValue().getName() + " of " + sampleName + "-a" + Utils.HardCode.dcf.format(alpha*10000)));
 					cDur.LinkTo(new CSV_Builder(analyzer.getValue().getName()));					
 					
+					// Find the values within the graph and analyze
 					if (analyzer.getValue() instanceof BCAnalyzer) {
 						bcVal = sampleValue;
 						
@@ -325,9 +326,10 @@ public class AnalysisRunner {
 						cDur.LinkToEnd(MeasureComparison.compare(populationOutDegree, sampleValue)); // [correlation, PR]
 						cDur.LinkToEnd(MeasureComparison.KSCompare(populationOutDegree, sampleValue)); // [KS]
 					} else {
+						// THIS HAS BEEN SORTED BACKWARDS
 						edVal = sampleValue;
 
-						cDur.LinkToEnd(MeasureComparison.compare(populationED, sampleValue)); // [correlation, PR]
+						cDur.LinkToEnd(MeasureComparison.compare(populationED, sampleValue, true)); // [correlation, PR]
 						cDur.LinkToEnd(MeasureComparison.KSCompare(populationED, sampleValue)); // [KS]
 					}
 					
@@ -343,9 +345,10 @@ public class AnalysisRunner {
 				ArrayList<Entry<String, Double>> odeList = new ArrayList<Entry<String, Double>>(odeVal.entrySet());
 				
 				Collections.sort(bcList, MeasureComparison.entrySort);
-				Collections.sort(edList, MeasureComparison.entrySort);
 				Collections.sort(ideList, MeasureComparison.entrySort);
 				Collections.sort(odeList, MeasureComparison.entrySort);
+				// This has been reversed since ED is better when it's small
+				Collections.sort(edList, MeasureComparison.entrySortBackwards);
 				
 				double[] topPercentages = {0.1, 0.2, 0.5};
 				

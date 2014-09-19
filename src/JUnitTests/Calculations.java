@@ -35,8 +35,8 @@ public class Calculations {
 
 	@Test
 	public void testSpearmans() throws IOException {
-		double[] d = {0.1, 0.5, 0.5};
-		double[] d2 = {0.1, 0.4, 0.4};
+		double[] d = {0.09279, 0.09675, 0.10531, 0.010745, 0.11787};
+		double[] d2 = {0, 0, 0.1667, 1, 1};
 		assert(Correlations.spearmansCorrelation(d, d2) == 1.0);
 	}
 	

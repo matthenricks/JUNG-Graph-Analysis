@@ -282,8 +282,9 @@ public class Correlations {
 		} else if (var2 == 0) {
 			if (mean1 != mean2)
 				return 0;
-			else if (var1 == 0) // Means are equal
-				return 1;
+			
+			// else if (var1 == 0) // Means are equal
+			//	return 1;
 			else
 				return Double.NaN;
 		}
