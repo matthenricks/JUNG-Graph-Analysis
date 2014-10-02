@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -129,6 +130,8 @@ public class AnalysisRunner {
 			0.01, 0.02, 0.03, 0.04, 0.05, 
 			0.08, 0.1, 0.2
 	};
+	
+	static final int maxThreads = 5;
 	
 	/**
 	 * 0.01, 0.02, 0.03, 0.04, // 0.05 }; 
@@ -519,6 +522,8 @@ public class AnalysisRunner {
 			// Create an array to hold the different threads
 			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
 			
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			
 			// Run the analysis
 			for (int replica = 0; replica < replicaLength; replica++) {
 				// Uniquely name this version and create its folder
@@ -532,23 +537,18 @@ public class AnalysisRunner {
 				// Run the sample threads
 				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
-			}
 
-			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
-			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-				try {
-					input.LinkTo(retVal.get());
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-					System.err.println("culprit is one of: " + tFolder);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					System.err.println("the iteration probably took too long: " + tFolder);						
+				if (tasks.size() >= maxThreads) {
+					// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+					runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
+					test.LinkTo(input);
+					tasks.clear();
+					input = new CSV_Builder(new CSV_Percent(threshold));
 				}
 			}
-				
-				
+			
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+			runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
 			test.LinkTo(input);
 			tasks.clear();
 		}
@@ -583,6 +583,8 @@ public class AnalysisRunner {
 			// Create an array to hold the different threads
 			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
 			
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			
 			// Run the analysis
 			for (int replica = 0; replica < replicaLength; replica++) {
 				// Uniquely name this version and create its folder
@@ -596,24 +598,20 @@ public class AnalysisRunner {
 				// Run the sample threads
 				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
-			}
-
-			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
-			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-				try {
-					input.LinkTo(retVal.get());
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-					System.err.println("culprit is one of: " + tFolder);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					System.err.println("the iteration probably took too long: " + tFolder);						
+				
+				if (tasks.size() >= maxThreads) {
+					// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+					runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
+					test.LinkTo(input);
+					tasks.clear();
+					input = new CSV_Builder(new CSV_Percent(threshold));
 				}
 			}
-				
+			
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+			runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
 			test.LinkTo(input);
-			tasks.clear();	
+			tasks.clear();
 		}
 		// Lastly add the sample type used and the overall graph information
 		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
@@ -643,6 +641,8 @@ public class AnalysisRunner {
 			// Create an array to hold the different threads
 			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
 			
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			
 			// Run the analysis
 			for (int replica = 0; replica < replicaLength; replica++) {
 				// Uniquely name this version and create its folder
@@ -656,24 +656,20 @@ public class AnalysisRunner {
 				// Run the sample threads
 				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
-			}
 
-			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
-			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-				try {
-					input.LinkTo(retVal.get());
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-					System.err.println("culprit is one of: " + tFolder);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					System.err.println("the iteration probably took too long: " + tFolder);						
+				if (tasks.size() >= maxThreads) {
+					// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+					runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
+					test.LinkTo(input);
+					tasks.clear();
+					input = new CSV_Builder(new CSV_Percent(threshold));
 				}
 			}
-				
+			
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+			runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
 			test.LinkTo(input);
-			tasks.clear();	
+			tasks.clear();
 		}
 		// Lastly add the sample type used and the overall graph information
 		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
@@ -705,6 +701,8 @@ public class AnalysisRunner {
 			// Create an array to hold the different threads
 			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
 			
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			
 			// Run the analysis
 			for (int replica = 0; replica < replicaLength; replica++) {
 				// Uniquely name this version and create its folder
@@ -718,24 +716,20 @@ public class AnalysisRunner {
 				// Run the sample threads
 				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
-			}
 
-			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
-			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-				try {
-					input.LinkTo(retVal.get());
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-					System.err.println("culprit is one of: " + tFolder);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					System.err.println("the iteration probably took too long: " + tFolder);						
+				if (tasks.size() >= maxThreads) {
+					// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+					runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
+					test.LinkTo(input);
+					tasks.clear();
+					input = new CSV_Builder(new CSV_Percent(threshold));
 				}
 			}
-				
+			
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+			runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
 			test.LinkTo(input);
-			tasks.clear();	
+			tasks.clear();
 		}
 		// Lastly add the sample type used and the overall graph information
 		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
@@ -768,6 +762,8 @@ public class AnalysisRunner {
 			// Create an array to hold the different threads
 			ArrayList<Callable<CSV_Builder>> tasks = new ArrayList<Callable<CSV_Builder>>();
 			
+			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
+			
 			// Run the analysis
 			for (int replica = 0; replica < replicaLength; replica++) {
 				// Uniquely name this version and create its folder
@@ -781,24 +777,20 @@ public class AnalysisRunner {
 				// Run the sample threads
 				// Link: ID <-- alpha(%), vert(#), edge(#) <-- Iterations, real alpha, real threshold, WCC, Duration, Measure
 				tasks.add(new SampleThreadRunner(sampleDir, sampleName, sampleMethod, graph, replica));
-			}
 
-			CSV_Builder input = new CSV_Builder(new CSV_Percent(threshold));
-			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls
-			for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, loader.myTimeOut, loader.myTimeOutUnit)) {
-				try {
-					input.LinkTo(retVal.get());
-				} catch (ExecutionException e) {
-					e.printStackTrace();
-					System.err.println("culprit is one of: " + tFolder);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-					System.err.println("the iteration probably took too long: " + tFolder);						
+				if (tasks.size() >= maxThreads) {
+					// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+					runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
+					test.LinkTo(input);
+					tasks.clear();
+					input = new CSV_Builder(new CSV_Percent(threshold));
 				}
 			}
-				
+			
+			// threshold(%) <-- replica ID, alpha (%), sample nodes, sample edges, Iterations, Real Alpha, Real Threshold, WCC, BC Duration, corrSize(%), corrSize(#), Spearmans, Pearsons, Error, Kendalls			
+			runThreads(input, tasks, loader.myTimeOut, loader.myTimeOutUnit, tFolder);
 			test.LinkTo(input);
-			tasks.clear();	
+			tasks.clear();
 		}
 		// Lastly add the sample type used and the overall graph information
 		mainData = new CSV_Builder(graph.getVertexCount(), // parent node count
@@ -819,6 +811,7 @@ public class AnalysisRunner {
 		/** Random Forest Sampling **/
 		// Begin the sampling!
 		/*
+		 * TODO: THIS DOESN'T HAVE THE THREAD LIMITER
 		testName = "ForestFire";
 		test = new CSV_Builder(testName);
 		mFolder = sampleOverallDir + testName;
@@ -899,5 +892,28 @@ public class AnalysisRunner {
 		BufferedWriter jobOutput = Utils.FileSystem.createWriter(Utils.FileSystem.findOpenPath(loader.myOutput + HardCode.pSummaryPostfix));
 		mainTracker.writeJobTimes(jobOutput);
 		jobOutput.close();
+	}
+	
+	/**
+	 * Wraps the threadPool invoke method
+	 * @param input
+	 * @param tasks
+	 * @param timeOut
+	 * @param unit
+	 * @param tFolder
+	 * @throws InterruptedException 
+	 */
+	private static void runThreads(CSV_Builder input, ArrayList<Callable<CSV_Builder>> tasks, int timeOut, TimeUnit unit, String tFolder) throws InterruptedException {
+		for (Future<CSV_Builder> retVal : threadPool.invokeAll(tasks, timeOut, unit)) {
+			try {
+				input.LinkTo(retVal.get());
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				System.err.println("culprit is one of: " + tFolder);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+				System.err.println("the iteration probably took too long: " + tFolder);						
+			}
+		}
 	}
 }
